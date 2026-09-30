@@ -1,0 +1,129 @@
+<div class="auth-wrapper">
+  <div class="ambient-glow glow-1"></div>
+  <div class="ambient-glow glow-2"></div>
+
+  <div class="auth-card glass-card register-card">
+    <div class="auth-header">
+      <div class="brand-badge">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+          <polyline points="22 7 13.5 15.5 8.5 10.5 2 17"></polyline>
+          <polyline points="16 7 22 7 22 13"></polyline>
+        </svg>
+      </div>
+      <h2>Create Trader Account</h2>
+      <p class="auth-subtitle">Get immediate access with <strong>$100,000</strong> simulated cash portfolio</p>
+    </div>
+
+    <!-- Alert / Error -->
+    <div class="alert alert-danger" *ngIf="errorMessage">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <circle cx="12" cy="12" r="10"></circle>
+        <line x1="12" y1="8" x2="12" y2="12"></line>
+        <line x1="12" y1="16" x2="12.01" y2="16"></line>
+      </svg>
+      <span>{{ errorMessage }}</span>
+    </div>
+
+    <form (ngSubmit)="onSubmit()" class="auth-form">
+      <div class="form-row grid-2">
+        <div class="form-group">
+          <label for="firstName">First Name</label>
+          <input
+            id="firstName"
+            type="text"
+            placeholder="John"
+            [(ngModel)]="userData.firstName"
+            name="firstName"
+            class="form-control"
+          />
+        </div>
+        <div class="form-group">
+          <label for="lastName">Last Name</label>
+          <input
+            id="lastName"
+            type="text"
+            placeholder="Doe"
+            [(ngModel)]="userData.lastName"
+            name="lastName"
+            class="form-control"
+          />
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="reg-username">Username *</label>
+        <div class="input-icon-wrap">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+            <circle cx="12" cy="7" r="4"></circle>
+          </svg>
+          <input
+            id="reg-username"
+            type="text"
+            placeholder="trader_john"
+            [(ngModel)]="userData.username"
+            name="username"
+            required
+            class="form-control"
+          />
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="reg-email">Email Address *</label>
+        <div class="input-icon-wrap">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
+            <polyline points="22,6 12,13 2,6"></polyline>
+          </svg>
+          <input
+            id="reg-email"
+            type="email"
+            placeholder="john@example.com"
+            [(ngModel)]="userData.email"
+            name="email"
+            required
+            class="form-control"
+          />
+        </div>
+      </div>
+
+      <div class="form-row grid-2">
+        <div class="form-group">
+          <label for="reg-password">Password *</label>
+          <input
+            id="reg-password"
+            type="password"
+            placeholder="Min 6 characters"
+            [(ngModel)]="userData.password"
+            name="password"
+            required
+            class="form-control"
+          />
+        </div>
+        <div class="form-group">
+          <label for="confirm-pass">Confirm *</label>
+          <input
+            id="confirm-pass"
+            type="password"
+            placeholder="Repeat password"
+            [(ngModel)]="confirmPassword"
+            name="confirmPassword"
+            required
+            class="form-control"
+          />
+        </div>
+      </div>
+
+      <button type="submit" class="btn btn-primary w-full submit-btn" [disabled]="loading">
+        <span *ngIf="loading" class="spinner-small"></span>
+        <span *ngIf="!loading">Launch Trading Terminal ($100K Seed)</span>
+      </button>
+    </form>
+
+    <div class="auth-footer">
+      <span class="text-sm text-secondary">Already have an account?</span>
+      <a routerLink="/login" class="text-sm text-blue font-semi">Sign In</a>
+    </div>
+  </div>
+</div>

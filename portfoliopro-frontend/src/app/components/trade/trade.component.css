@@ -1,0 +1,310 @@
+.trade-page {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.quick-pill-strip {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  overflow-x: auto;
+  padding-bottom: 4px;
+}
+
+.pill-label {
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: var(--text-muted);
+}
+
+.ticker-pill {
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  color: var(--text-secondary);
+  padding: 5px 12px;
+  border-radius: var(--radius-full);
+  font-size: 0.78rem;
+  font-weight: 700;
+  transition: var(--transition-fast);
+}
+.ticker-pill:hover {
+  background: rgba(99,179,237,0.12);
+  color: var(--accent-blue);
+  border-color: rgba(99,179,237,0.3);
+}
+.ticker-pill.active {
+  background: var(--accent-blue);
+  color: #0a0e1a;
+  border-color: var(--accent-blue);
+}
+
+.trade-grid {
+  display: grid;
+  grid-template-columns: 1.4fr 1fr;
+  gap: 24px;
+  align-items: start;
+}
+
+/* ── Ticket Card ────────────────────────────────────────────────── */
+.order-ticket-card {
+  padding: 0;
+  overflow: hidden;
+}
+
+.ticket-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: var(--bg-secondary);
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.side-tabs {
+  display: flex;
+  background: var(--bg-input);
+  padding: 3px;
+  border-radius: var(--radius-md);
+  gap: 2px;
+}
+
+.side-tab {
+  padding: 8px 24px;
+  border-radius: var(--radius-sm);
+  font-weight: 800;
+  font-size: 0.88rem;
+  background: transparent;
+  color: var(--text-secondary);
+  transition: var(--transition-fast);
+}
+
+.buy-tab.active {
+  background: var(--green-bright);
+  color: #0a0e1a;
+  box-shadow: 0 2px 10px rgba(72,187,120,0.3);
+}
+
+.sell-tab.active {
+  background: var(--red-bright);
+  color: #0a0e1a;
+  box-shadow: 0 2px 10px rgba(252,129,129,0.3);
+}
+
+.type-selector {
+  display: flex;
+  background: var(--bg-input);
+  padding: 3px;
+  border-radius: var(--radius-md);
+  gap: 2px;
+}
+
+.type-tab {
+  padding: 6px 14px;
+  border-radius: var(--radius-sm);
+  font-size: 0.75rem;
+  font-weight: 700;
+  background: transparent;
+  color: var(--text-secondary);
+  transition: var(--transition-fast);
+}
+.type-tab.active {
+  background: rgba(255,255,255,0.12);
+  color: #fff;
+}
+
+.ticket-body {
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.stock-quote-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 16px;
+  background: rgba(99,179,237,0.06);
+  border: 1px solid rgba(99,179,237,0.2);
+  border-radius: var(--radius-md);
+}
+
+.sym-tag {
+  font-size: 1.1rem;
+  color: var(--accent-blue);
+  margin-right: 8px;
+}
+
+.quote-price-info {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.percent-pills {
+  display: flex;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+.pct-btn {
+  flex: 1;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid var(--border-subtle);
+  color: var(--text-secondary);
+  padding: 6px 0;
+  border-radius: var(--radius-sm);
+  font-size: 0.72rem;
+  font-weight: 700;
+  transition: var(--transition-fast);
+}
+.pct-btn:hover {
+  background: rgba(99,179,237,0.15);
+  color: var(--accent-blue);
+}
+
+.order-breakdown {
+  background: var(--bg-secondary);
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.breakdown-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.breakdown-divider {
+  height: 1px;
+  background: var(--border-subtle);
+  margin: 4px 0;
+}
+
+.total-row {
+  font-size: 1.05rem;
+}
+
+.order-submit-btn {
+  padding: 14px;
+  font-size: 1rem;
+  font-weight: 800;
+}
+
+/* ── Sidebar ────────────────────────────────────────────────────── */
+.account-sidebar {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.big-cash {
+  font-size: 2rem;
+  font-weight: 800;
+  margin: 6px 0;
+}
+
+.position-metric-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--border-subtle);
+}
+.position-metric-row:last-child {
+  border-bottom: none;
+}
+
+.no-position-text {
+  padding: 12px 0;
+}
+
+.guidelines-list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+/* ── Modal ──────────────────────────────────────────────────────── */
+.modal-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0,0,0,0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  backdrop-filter: blur(8px);
+}
+
+.modal-card {
+  width: 100%;
+  max-width: 460px;
+  padding: 28px;
+}
+
+.modal-header {
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 20px;
+}
+
+.receipt-icon {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  background: rgba(72,187,120,0.15);
+  color: var(--green-bright);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(72,187,120,0.3);
+}
+
+.modal-body {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  background: var(--bg-secondary);
+  padding: 16px;
+  border-radius: var(--radius-md);
+  margin-bottom: 20px;
+}
+
+.receipt-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.receipt-divider {
+  height: 1px;
+  background: var(--border-subtle);
+  margin: 6px 0;
+}
+
+.total-receipt-row {
+  font-weight: 700;
+}
+
+.modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+@media (max-width: 900px) {
+  .trade-grid {
+    grid-template-columns: 1fr;
+  }
+}

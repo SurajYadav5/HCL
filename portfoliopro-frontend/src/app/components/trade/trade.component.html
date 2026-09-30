@@ -1,0 +1,284 @@
+<div class="trade-page">
+  <div class="page-title-row">
+    <div>
+      <h1 class="page-title">Order Execution Desk</h1>
+      <p class="text-sm text-secondary">High-frequency order routing, market & limit execution engine</p>
+    </div>
+  </div>
+
+  <!-- Ticker Quick Pills -->
+  <div class="quick-pill-strip">
+    <span class="pill-label font-mono">QUICK SELECT:</span>
+    <button 
+      *ngFor="let t of popularTickers" 
+      class="ticker-pill font-mono"
+      [class.active]="symbol === t"
+      (click)="selectSymbol(t)">
+      {{ t }}
+    </button>
+  </div>
+
+  <div class="trade-grid">
+    <!-- ══════════════════════════════════════════════════════════════
+         Order Execution Ticket
+         ══════════════════════════════════════════════════════════════ -->
+    <div class="card order-ticket-card">
+      <div class="ticket-header">
+        <!-- BUY / SELL Tab Switcher -->
+        <div class="side-tabs">
+          <button 
+            type="button" 
+            class="side-tab buy-tab" 
+            [class.active]="side === 'BUY'"
+            (click)="setSide('BUY')">
+            BUY
+          </button>
+          <button 
+            type="button" 
+            class="side-tab sell-tab" 
+            [class.active]="side === 'SELL'"
+            (click)="setSide('SELL')">
+            SELL
+          </button>
+        </div>
+
+        <!-- ORDER TYPE (Market vs Limit) -->
+        <div class="type-selector">
+          <button 
+            type="button" 
+            class="type-tab" 
+            [class.active]="type === 'MARKET'"
+            (click)="setType('MARKET')">
+            MARKET
+          </button>
+          <button 
+            type="button" 
+            class="type-tab" 
+            [class.active]="type === 'LIMIT'"
+            (click)="setType('LIMIT')">
+            LIMIT
+          </button>
+        </div>
+      </div>
+
+      <div class="ticket-body">
+        <!-- Selected Stock Info Banner -->
+        <div class="stock-quote-bar" *ngIf="currentQuote">
+          <div class="quote-info">
+            <span class="sym-tag font-mono font-bold">{{ currentQuote.symbol }}</span>
+            <span class="text-xs text-muted">{{ currentQuote.companyName }}</span>
+          </div>
+          <div class="quote-price-info">
+            <span class="font-mono font-bold text-lg">${{ currentQuote.price | number:'1.2-2' }}</span>
+            <span class="badge font-mono" [class.badge-gain]="currentQuote.change >= 0" [class.badge-loss]="currentQuote.change < 0">
+              {{ currentQuote.change >= 0 ? '+' : '' }}{{ currentQuote.changePercent | number:'1.2-2' }}%
+            </span>
+          </div>
+        </div>
+
+        <!-- Symbol Input -->
+        <div class="form-group">
+          <label>Ticker Symbol</label>
+          <div class="input-wrap">
+            <input 
+              type="text" 
+              class="form-control font-mono uppercase" 
+              [(ngModel)]="symbol" 
+              (change)="fetchQuote(symbol)"
+              placeholder="e.g. AAPL, NVDA"
+            />
+          </div>
+        </div>
+
+        <!-- Limit Price Input (if LIMIT) -->
+        <div class="form-group" *ngIf="type === 'LIMIT'">
+          <label>Limit Price ($)</label>
+          <input 
+            type="number" 
+            step="0.01" 
+            class="form-control font-mono" 
+            [(ngModel)]="limitPrice"
+            placeholder="Enter limit price"
+          />
+        </div>
+
+        <!-- Shares Quantity & Quick Buttons -->
+        <div class="form-group">
+          <div class="label-row">
+            <label>Quantity (Shares)</label>
+            <span class="text-xs text-secondary">
+              {{ side === 'BUY' ? 'Max Affordable: ' + (portfolio ? (portfolio.cashBalance / effectivePrice | number:'1.0-0') : 0) : 'Owned: ' + (currentHolding?.quantity || 0) }}
+            </span>
+          </div>
+          <input 
+            type="number" 
+            min="1" 
+            max="100000" 
+            class="form-control font-mono" 
+            [(ngModel)]="quantity"
+          />
+
+          <!-- Percentage Quick Pill Buttons -->
+          <div class="percent-pills">
+            <button type="button" class="pct-btn" (click)="setPercentQty(0.25)">25%</button>
+            <button type="button" class="pct-btn" (click)="setPercentQty(0.50)">50%</button>
+            <button type="button" class="pct-btn" (click)="setPercentQty(0.75)">75%</button>
+            <button type="button" class="pct-btn" (click)="setPercentQty(1.00)">100%</button>
+          </div>
+        </div>
+
+        <!-- Order Summary Breakdown -->
+        <div class="order-breakdown card">
+          <div class="breakdown-row">
+            <span class="text-secondary text-xs">ORDER TYPE</span>
+            <span class="font-mono text-xs">{{ side }} {{ type }}</span>
+          </div>
+          <div class="breakdown-row">
+            <span class="text-secondary text-xs">ESTIMATED PRICE</span>
+            <span class="font-mono text-xs">${{ effectivePrice | number:'1.2-2' }}</span>
+          </div>
+          <div class="breakdown-row">
+            <span class="text-secondary text-xs">COMMISSION</span>
+            <span class="font-mono text-xs text-green">$0.00 (FREE)</span>
+          </div>
+          <div class="breakdown-divider"></div>
+          <div class="breakdown-row total-row">
+            <span class="font-semi">ESTIMATED TOTAL</span>
+            <span class="font-mono font-bold text-lg">${{ estimatedTotal | number:'1.2-2' }}</span>
+          </div>
+        </div>
+
+        <!-- Error Alert -->
+        <div class="alert alert-danger" *ngIf="executionError">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"></circle>
+            <line x1="12" y1="8" x2="12" y2="12"></line>
+            <line x1="12" y1="16" x2="12.01" y2="16"></line>
+          </svg>
+          <span>{{ executionError }}</span>
+        </div>
+
+        <!-- Submit Button -->
+        <button 
+          type="button" 
+          class="btn w-full order-submit-btn" 
+          [class.btn-buy]="side === 'BUY'"
+          [class.btn-sell]="side === 'SELL'"
+          [disabled]="isSubmitting || !canSubmit"
+          (click)="submitOrder()">
+          <span *ngIf="isSubmitting" class="spinner-small"></span>
+          <span *ngIf="!isSubmitting">
+            Execute {{ side }} {{ quantity }} Shares of {{ symbol }}
+          </span>
+        </button>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════════════════════════
+         Account & Position Snapshot
+         ══════════════════════════════════════════════════════════════ -->
+    <div class="account-sidebar">
+      <!-- Buying Power Card -->
+      <div class="card account-stat-card">
+        <h4>Available Buying Power</h4>
+        <div class="big-cash font-mono text-green">${{ (portfolio?.cashBalance || 100000) | number:'1.2-2' }}</div>
+        <p class="text-xs text-secondary">Settled cash available for instant order placement</p>
+      </div>
+
+      <!-- Current Position in Selected Ticker -->
+      <div class="card position-stat-card">
+        <h4>Position in {{ symbol }}</h4>
+        <div *ngIf="currentHolding">
+          <div class="position-metric-row">
+            <span class="text-xs text-secondary">SHARES OWNED</span>
+            <span class="font-mono font-semi">{{ currentHolding.quantity }}</span>
+          </div>
+          <div class="position-metric-row">
+            <span class="text-xs text-secondary">AVG PURCHASE</span>
+            <span class="font-mono font-semi">${{ currentHolding.averageCost | number:'1.2-2' }}</span>
+          </div>
+          <div class="position-metric-row">
+            <span class="text-xs text-secondary">CURRENT VALUE</span>
+            <span class="font-mono font-bold">${{ currentHolding.currentValue | number:'1.2-2' }}</span>
+          </div>
+          <div class="position-metric-row">
+            <span class="text-xs text-secondary">UNREALIZED P&L</span>
+            <span class="font-mono font-bold" [class.text-green]="currentHolding.unrealizedPnl >= 0" [class.text-red]="currentHolding.unrealizedPnl < 0">
+              {{ currentHolding.unrealizedPnl >= 0 ? '+' : '' }}${{ currentHolding.unrealizedPnl | number:'1.2-2' }} ({{ currentHolding.unrealizedPnlPct | number:'1.2-2' }}%)
+            </span>
+          </div>
+        </div>
+        <div *ngIf="!currentHolding" class="no-position-text">
+          <span class="text-xs text-muted">You do not currently own any shares of {{ symbol }}.</span>
+        </div>
+      </div>
+
+      <!-- Market Execution Rules -->
+      <div class="card execution-rules-card">
+        <h4>Trading Guidelines</h4>
+        <ul class="guidelines-list text-xs text-secondary">
+          <li>✓ Market orders execute instantly at the current best ask/bid.</li>
+          <li>✓ Limit orders trigger when the specified limit price is satisfied.</li>
+          <li>✓ Paper trading simulated fills replicate live market slippage.</li>
+          <li>✓ All executions update your portfolio balance and transaction history in real-time.</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════════════
+       Execution Receipt Modal
+       ══════════════════════════════════════════════════════════════ -->
+  <div class="modal-backdrop" *ngIf="showReceiptModal">
+    <div class="modal-card card glass-card">
+      <div class="modal-header">
+        <div class="receipt-icon">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <polyline points="20 6 9 17 4 12"></polyline>
+          </svg>
+        </div>
+        <h3>Order Filled Successfully</h3>
+        <span class="font-mono text-xs text-muted">Order ID: #{{ lastExecutedOrder?.id }}</span>
+      </div>
+
+      <div class="modal-body" *ngIf="lastExecutedOrder">
+        <div class="receipt-row">
+          <span class="text-secondary text-xs">ASSET</span>
+          <span class="font-mono font-bold text-blue">{{ lastExecutedOrder.symbol }} ({{ lastExecutedOrder.companyName }})</span>
+        </div>
+        <div class="receipt-row">
+          <span class="text-secondary text-xs">ACTION</span>
+          <span class="badge" [class.badge-gain]="lastExecutedOrder.side === 'BUY'" [class.badge-loss]="lastExecutedOrder.side === 'SELL'">
+            {{ lastExecutedOrder.side }} {{ lastExecutedOrder.type }}
+          </span>
+        </div>
+        <div class="receipt-row">
+          <span class="text-secondary text-xs">QUANTITY</span>
+          <span class="font-mono">{{ lastExecutedOrder.quantity }} Shares</span>
+        </div>
+        <div class="receipt-row">
+          <span class="text-secondary text-xs">FILLED PRICE</span>
+          <span class="font-mono font-semi">${{ lastExecutedOrder.executedPrice | number:'1.2-2' }}</span>
+        </div>
+        <div class="receipt-row">
+          <span class="text-secondary text-xs">COMMISSION</span>
+          <span class="font-mono text-green">$0.00</span>
+        </div>
+        <div class="receipt-divider"></div>
+        <div class="receipt-row total-receipt-row">
+          <span>NET SETTLEMENT</span>
+          <span class="font-mono font-bold text-lg">${{ lastExecutedOrder.totalValue | number:'1.2-2' }}</span>
+        </div>
+        <div class="receipt-row">
+          <span class="text-secondary text-xs">EXECUTION TIME</span>
+          <span class="font-mono text-xs text-muted">{{ lastExecutedOrder.createdAt | date:'medium' }}</span>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn btn-secondary btn-sm" (click)="closeReceipt()">Trade Again</button>
+        <a routerLink="/portfolio" class="btn btn-primary btn-sm" (click)="closeReceipt()">View Portfolio</a>
+      </div>
+    </div>
+  </div>
+</div>

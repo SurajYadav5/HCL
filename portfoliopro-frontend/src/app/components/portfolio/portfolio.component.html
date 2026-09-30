@@ -1,0 +1,243 @@
+<div class="portfolio-page">
+  <div class="page-title-row">
+    <div>
+      <h1 class="page-title">Portfolio & Risk Management</h1>
+      <p class="text-sm text-secondary">Asset allocation, position risk, and performance tracking</p>
+    </div>
+    <div class="header-actions">
+      <button class="btn btn-secondary btn-sm" (click)="loadPortfolio()">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polyline points="23 4 23 10 17 10"></polyline>
+          <polyline points="1 20 1 14 7 14"></polyline>
+          <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
+        </svg>
+        Recalculate P&L
+      </button>
+      <a routerLink="/trade" class="btn btn-primary btn-sm">Trade Assets</a>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════════════
+       Portfolio Summary KPIs
+       ══════════════════════════════════════════════════════════════ -->
+  <div class="grid grid-4 portfolio-kpi-grid">
+    <div class="card kpi-card">
+      <span class="kpi-label">TOTAL PORTFOLIO VALUE</span>
+      <div class="kpi-value font-mono text-blue">${{ summary.totalPortfolioValue | number:'1.2-2' }}</div>
+      <span class="text-xs text-muted">Cash: ${{ summary.cashBalance | number:'1.2-2' }}</span>
+    </div>
+
+    <div class="card kpi-card">
+      <span class="kpi-label">TOTAL CAPITAL INVESTED</span>
+      <div class="kpi-value font-mono">${{ summary.totalInvested | number:'1.2-2' }}</div>
+      <span class="text-xs text-muted">{{ summary.totalPositions }} Open Positions</span>
+    </div>
+
+    <div class="card kpi-card">
+      <span class="kpi-label">TOTAL UNREALIZED P&L</span>
+      <div class="kpi-value font-mono" [class.text-green]="summary.totalUnrealizedPnl >= 0" [class.text-red]="summary.totalUnrealizedPnl < 0">
+        {{ summary.totalUnrealizedPnl >= 0 ? '+' : '' }}${{ summary.totalUnrealizedPnl | number:'1.2-2' }}
+      </div>
+      <span class="badge" [class.badge-gain]="summary.totalUnrealizedPnlPct >= 0" [class.badge-loss]="summary.totalUnrealizedPnlPct < 0">
+        {{ summary.totalUnrealizedPnlPct >= 0 ? '+' : '' }}{{ summary.totalUnrealizedPnlPct | number:'1.2-2' }}%
+      </span>
+    </div>
+
+    <div class="card kpi-card">
+      <span class="kpi-label">TOTAL REALIZED P&L</span>
+      <div class="kpi-value font-mono" [class.text-green]="summary.totalRealizedPnl >= 0" [class.text-red]="summary.totalRealizedPnl < 0">
+        {{ summary.totalRealizedPnl >= 0 ? '+' : '' }}${{ summary.totalRealizedPnl | number:'1.2-2' }}
+      </div>
+      <span class="text-xs text-muted">{{ summary.totalTrades }} Executed Trades</span>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════════════
+       Asset Allocation & Risk Breakdown
+       ══════════════════════════════════════════════════════════════ -->
+  <div class="allocation-grid">
+    <!-- Asset Distribution Bar -->
+    <div class="card risk-card">
+      <div class="card-header-styled">
+        <h3>Asset Allocation Breakdown</h3>
+        <span class="badge-tag">REBALANCING</span>
+      </div>
+
+      <div class="allocation-bar-wrap">
+        <div class="allocation-bar">
+          <div class="bar-segment equities" [style.width.%]="equitiesAllocationPct" title="Equities"></div>
+          <div class="bar-segment cash" [style.width.%]="cashAllocationPct" title="Cash"></div>
+        </div>
+        <div class="bar-legend">
+          <div class="legend-item">
+            <span class="legend-dot equities"></span>
+            <span class="text-xs text-secondary">Equities: {{ equitiesAllocationPct | number:'1.1-1' }}% (${{ summary.totalCurrentValue | number:'1.2-2' }})</span>
+          </div>
+          <div class="legend-item">
+            <span class="legend-dot cash"></span>
+            <span class="text-xs text-secondary">Cash: {{ cashAllocationPct | number:'1.1-1' }}% (${{ summary.cashBalance | number:'1.2-2' }})</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Holdings weight progress bars -->
+      <div class="holding-weights-list" *ngIf="summary.holdings.length > 0">
+        <h5 class="text-xs text-muted">WEIGHT BY HOLDING</h5>
+        <div class="weight-row" *ngFor="let h of summary.holdings">
+          <div class="weight-info">
+            <span class="font-mono font-semi">{{ h.symbol }}</span>
+            <span class="text-xs text-muted">{{ h.companyName }}</span>
+          </div>
+          <div class="weight-progress-wrap">
+            <div class="weight-progress-bar" [style.width.%]="h.allocationPct"></div>
+          </div>
+          <span class="font-mono text-xs font-semi">{{ h.allocationPct | number:'1.1-1' }}%</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Risk Analysis Card -->
+    <div class="card risk-metrics-card">
+      <div class="card-header-styled">
+        <h3>Risk & Exposure Metrics</h3>
+      </div>
+
+      <div class="risk-indicators">
+        <div class="risk-item">
+          <div class="risk-info">
+            <span class="risk-name">Diversification Health</span>
+            <span class="text-xs text-muted">{{ diversificationRating.desc }}</span>
+          </div>
+          <span class="risk-badge" [class]="'badge-' + diversificationRating.color">
+            {{ diversificationRating.rating }}
+          </span>
+        </div>
+
+        <div class="risk-item">
+          <div class="risk-info">
+            <span class="risk-name">Estimated Beta</span>
+            <span class="text-xs text-muted">Sensitivity relative to S&P 500 index</span>
+          </div>
+          <span class="font-mono font-bold">1.12</span>
+        </div>
+
+        <div class="risk-item">
+          <div class="risk-info">
+            <span class="risk-name">Largest Position Weight</span>
+            <span class="text-xs text-muted">Max single ticker exposure</span>
+          </div>
+          <span class="font-mono font-bold">
+            {{ summary.holdings.length > 0 ? (summary.holdings[0].allocationPct | number:'1.1-1') : '0.0' }}%
+          </span>
+        </div>
+
+        <div class="risk-item">
+          <div class="risk-info">
+            <span class="risk-name">Settlement Status</span>
+            <span class="text-xs text-muted">Reg-T compliance & margin status</span>
+          </div>
+          <span class="badge badge-gain">CASH ONLY (100% COVERED)</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════════════
+       Holdings Detail Table
+       ══════════════════════════════════════════════════════════════ -->
+  <div class="card holdings-table-card">
+    <div class="table-toolbar">
+      <div class="toolbar-left">
+        <h3>Holdings Directory</h3>
+        <span class="badge-tag font-mono">{{ filteredHoldings.length }} POSITIONS</span>
+      </div>
+
+      <div class="toolbar-right">
+        <!-- Filter Search -->
+        <input 
+          type="text" 
+          placeholder="Filter by ticker or name..." 
+          [(ngModel)]="filterQuery"
+          class="filter-input"
+        />
+
+        <!-- Sort dropdown -->
+        <div class="sort-buttons">
+          <button class="btn-sort" [class.active]="sortBy === 'value'" (click)="setSort('value')">
+            Value {{ sortBy === 'value' ? (sortOrder === 'desc' ? '↓' : '↑') : '' }}
+          </button>
+          <button class="btn-sort" [class.active]="sortBy === 'pnl'" (click)="setSort('pnl')">
+            P&L {{ sortBy === 'pnl' ? (sortOrder === 'desc' ? '↓' : '↑') : '' }}
+          </button>
+          <button class="btn-sort" [class.active]="sortBy === 'symbol'" (click)="setSort('symbol')">
+            Ticker {{ sortBy === 'symbol' ? (sortOrder === 'desc' ? '↓' : '↑') : '' }}
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div class="table-responsive" *ngIf="filteredHoldings.length > 0">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>SYMBOL / ASSET</th>
+            <th>SECTOR</th>
+            <th>SHARES</th>
+            <th>AVG PRICE</th>
+            <th>CURRENT PRICE</th>
+            <th>TOTAL INVESTED</th>
+            <th>CURRENT VALUE</th>
+            <th>UNREALIZED P&L</th>
+            <th>WEIGHT</th>
+            <th>ACTIONS</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let h of filteredHoldings">
+            <td>
+              <div class="holding-sym-wrap">
+                <span class="font-mono font-bold text-blue">{{ h.symbol }}</span>
+                <span class="text-xs text-muted">{{ h.companyName }}</span>
+              </div>
+            </td>
+            <td>
+              <span class="sector-tag font-mono">{{ h.sector || 'Technology' }}</span>
+            </td>
+            <td class="font-mono font-semi">{{ h.quantity }}</td>
+            <td class="font-mono">${{ h.averageCost | number:'1.2-2' }}</td>
+            <td class="font-mono font-semi">${{ h.currentPrice | number:'1.2-2' }}</td>
+            <td class="font-mono text-muted">${{ h.totalInvested | number:'1.2-2' }}</td>
+            <td class="font-mono font-bold">${{ h.currentValue | number:'1.2-2' }}</td>
+            <td>
+              <div class="pnl-cell">
+                <span class="font-mono font-bold" [class.text-green]="h.unrealizedPnl >= 0" [class.text-red]="h.unrealizedPnl < 0">
+                  {{ h.unrealizedPnl >= 0 ? '+' : '' }}${{ h.unrealizedPnl | number:'1.2-2' }}
+                </span>
+                <span class="badge" [class.badge-gain]="h.unrealizedPnlPct >= 0" [class.badge-loss]="h.unrealizedPnlPct < 0">
+                  {{ h.unrealizedPnlPct >= 0 ? '+' : '' }}{{ h.unrealizedPnlPct | number:'1.2-2' }}%
+                </span>
+              </div>
+            </td>
+            <td class="font-mono">{{ h.allocationPct | number:'1.1-1' }}%</td>
+            <td>
+              <div class="action-buttons-row">
+                <button class="btn-micro btn-buy" (click)="tradeStock(h.symbol, 'BUY')">BUY</button>
+                <button class="btn-micro btn-sell" (click)="tradeStock(h.symbol, 'SELL')">SELL</button>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Empty State -->
+    <div class="empty-state" *ngIf="filteredHoldings.length === 0">
+      <div class="empty-icon">📈</div>
+      <h4>No Positions Found</h4>
+      <p class="text-sm text-secondary">
+        {{ filterQuery ? 'No holdings match your search query.' : 'Your portfolio is currently empty. Buy stocks to begin tracking positions!' }}
+      </p>
+      <a routerLink="/trade" class="btn btn-primary btn-sm">Start Trading</a>
+    </div>
+  </div>
+</div>

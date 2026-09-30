@@ -1,0 +1,355 @@
+<div class="dashboard-page">
+  <!-- Page Header -->
+  <div class="page-title-row">
+    <div>
+      <h1 class="page-title">Trader Terminal Overview</h1>
+      <p class="text-sm text-secondary">Real-time market quotes, portfolio valuation & execution engine</p>
+    </div>
+    <div class="header-actions">
+      <button class="btn btn-secondary btn-sm" (click)="loadAllData()">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polyline points="23 4 23 10 17 10"></polyline>
+          <polyline points="1 20 1 14 7 14"></polyline>
+          <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
+        </svg>
+        Refresh Feeds
+      </button>
+      <a routerLink="/trade" class="btn btn-primary btn-sm">New Order</a>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════════════
+       Portfolio KPI Stat Cards
+       ══════════════════════════════════════════════════════════════ -->
+  <div class="grid grid-4 stat-grid">
+    <!-- Stat 1: Total Portfolio Value -->
+    <div class="card stat-card">
+      <div class="stat-header">
+        <span class="stat-title">NET PORTFOLIO VALUE</span>
+        <div class="stat-icon-wrap blue">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="12" y1="1" x2="12" y2="23"></line>
+            <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
+          </svg>
+        </div>
+      </div>
+      <div class="stat-value font-mono">${{ summary.totalPortfolioValue | number:'1.2-2' }}</div>
+      <div class="stat-footer">
+        <span class="stat-subtext">Holdings: ${{ summary.totalCurrentValue | number:'1.2-2' }}</span>
+        <span class="badge-tag">USD</span>
+      </div>
+    </div>
+
+    <!-- Stat 2: Unrealized P&L -->
+    <div class="card stat-card">
+      <div class="stat-header">
+        <span class="stat-title">UNREALIZED P&L</span>
+        <div class="stat-icon-wrap" [class.green]="summary.totalUnrealizedPnl >= 0" [class.red]="summary.totalUnrealizedPnl < 0">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline>
+            <polyline points="17 6 23 6 23 12"></polyline>
+          </svg>
+        </div>
+      </div>
+      <div class="stat-value font-mono" [class.text-green]="summary.totalUnrealizedPnl >= 0" [class.text-red]="summary.totalUnrealizedPnl < 0">
+        {{ summary.totalUnrealizedPnl >= 0 ? '+' : '' }}${{ summary.totalUnrealizedPnl | number:'1.2-2' }}
+      </div>
+      <div class="stat-footer">
+        <span class="badge" [class.badge-gain]="summary.totalUnrealizedPnlPct >= 0" [class.badge-loss]="summary.totalUnrealizedPnlPct < 0">
+          {{ summary.totalUnrealizedPnlPct >= 0 ? '+' : '' }}{{ summary.totalUnrealizedPnlPct | number:'1.2-2' }}%
+        </span>
+        <span class="stat-subtext">Open Positions</span>
+      </div>
+    </div>
+
+    <!-- Stat 3: Realized P&L -->
+    <div class="card stat-card">
+      <div class="stat-header">
+        <span class="stat-title">REALIZED GAINS</span>
+        <div class="stat-icon-wrap gold">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="8" r="7"></circle>
+            <polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88"></polyline>
+          </svg>
+        </div>
+      </div>
+      <div class="stat-value font-mono" [class.text-green]="summary.totalRealizedPnl >= 0" [class.text-red]="summary.totalRealizedPnl < 0">
+        {{ summary.totalRealizedPnl >= 0 ? '+' : '' }}${{ summary.totalRealizedPnl | number:'1.2-2' }}
+      </div>
+      <div class="stat-footer">
+        <span class="stat-subtext">{{ summary.totalTrades }} Closed Trades</span>
+        <span class="badge-tag">YTD</span>
+      </div>
+    </div>
+
+    <!-- Stat 4: Cash Balance / Buying Power -->
+    <div class="card stat-card">
+      <div class="stat-header">
+        <span class="stat-title">BUYING POWER</span>
+        <div class="stat-icon-wrap green">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect>
+            <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path>
+          </svg>
+        </div>
+      </div>
+      <div class="stat-value font-mono text-green">${{ summary.cashBalance | number:'1.2-2' }}</div>
+      <div class="stat-footer">
+        <span class="stat-subtext">Available Cash for Trades</span>
+        <span class="badge-tag">INSTANT</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════════════
+       Main Section: Quick Trade & Market Movers
+       ══════════════════════════════════════════════════════════════ -->
+  <div class="dashboard-middle-grid">
+    <!-- Quick Order Execution Widget -->
+    <div class="card quick-trade-card">
+      <div class="card-header-styled">
+        <div class="header-left">
+          <span class="pulse-dot"></span>
+          <h3>Quick Trade Desk</h3>
+        </div>
+        <span class="badge-tag font-mono">0-COMMISSION</span>
+      </div>
+
+      <div class="quick-trade-form">
+        <!-- Buy / Sell Toggle -->
+        <div class="trade-side-selector">
+          <button 
+            type="button" 
+            class="side-btn buy-side" 
+            [class.active]="quickSide === 'BUY'"
+            (click)="quickSide = 'BUY'">
+            BUY ORDER
+          </button>
+          <button 
+            type="button" 
+            class="side-btn sell-side" 
+            [class.active]="quickSide === 'SELL'"
+            (click)="quickSide = 'SELL'">
+            SELL ORDER
+          </button>
+        </div>
+
+        <!-- Symbol & Live Price -->
+        <div class="form-row grid-2">
+          <div class="form-group">
+            <label>Ticker Symbol</label>
+            <select class="form-control font-mono" [(ngModel)]="quickSymbol" (change)="onQuickSymbolChange()">
+              <option *ngFor="let m of marketQuotes" [value]="m.symbol">
+                {{ m.symbol }} — {{ m.companyName }}
+              </option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Market Price</label>
+            <div class="price-display-box font-mono">
+              ${{ quickPrice | number:'1.2-2' }}
+            </div>
+          </div>
+        </div>
+
+        <!-- Quantity & Preset Buttons -->
+        <div class="form-group">
+          <div class="label-row">
+            <label>Quantity (Shares)</label>
+            <span class="text-xs text-muted">Est. Total: ${{ (quickQty * quickPrice) | number:'1.2-2' }}</span>
+          </div>
+          <div class="qty-input-row">
+            <input type="number" min="1" max="10000" class="form-control font-mono" [(ngModel)]="quickQty" />
+            <div class="qty-presets">
+              <button type="button" class="preset-btn" (click)="quickQty = 5">5</button>
+              <button type="button" class="preset-btn" (click)="quickQty = 10">10</button>
+              <button type="button" class="preset-btn" (click)="quickQty = 25">25</button>
+              <button type="button" class="preset-btn" (click)="quickQty = 50">50</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Alerts -->
+        <div class="alert alert-success" *ngIf="quickOrderSuccess">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="20 6 9 17 4 12"></polyline>
+          </svg>
+          <span>{{ quickOrderSuccess }}</span>
+        </div>
+        <div class="alert alert-danger" *ngIf="quickOrderError">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"></circle>
+            <line x1="12" y1="8" x2="12" y2="12"></line>
+            <line x1="12" y1="16" x2="12.01" y2="16"></line>
+          </svg>
+          <span>{{ quickOrderError }}</span>
+        </div>
+
+        <!-- Submit Button -->
+        <button 
+          type="button" 
+          class="btn w-full trade-submit-btn" 
+          [class.btn-buy]="quickSide === 'BUY'"
+          [class.btn-sell]="quickSide === 'SELL'"
+          [disabled]="quickSubmitting"
+          (click)="executeQuickTrade()">
+          <span *ngIf="quickSubmitting" class="spinner-small"></span>
+          <span *ngIf="!quickSubmitting">
+            Place {{ quickSide }} Order (${{ (quickQty * quickPrice) | number:'1.2-2' }})
+          </span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Market Movers: Gainers & Losers -->
+    <div class="card market-movers-card">
+      <div class="card-header-styled">
+        <h3>Today's Market Movers</h3>
+        <a routerLink="/market" class="text-xs text-blue">View All Market Data →</a>
+      </div>
+
+      <div class="movers-content">
+        <!-- Top Gainers -->
+        <div class="movers-column">
+          <div class="movers-col-title text-green">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="18 15 12 9 6 15"></polyline>
+            </svg>
+            TOP GAINERS
+          </div>
+          <div class="mover-items">
+            <div class="mover-item" *ngFor="let g of topGainers" (click)="viewStockDetails(g.symbol)">
+              <div class="mover-symbol">
+                <span class="font-mono font-bold">{{ g.symbol }}</span>
+                <span class="text-xs text-muted">{{ g.companyName }}</span>
+              </div>
+              <div class="mover-right">
+                <span class="font-mono font-semi">${{ g.price | number:'1.2-2' }}</span>
+                <span class="badge badge-gain font-mono">+{{ g.changePercent | number:'1.2-2' }}%</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Top Losers -->
+        <div class="movers-column">
+          <div class="movers-col-title text-red">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="6 9 12 15 18 9"></polyline>
+            </svg>
+            TOP DECLINERS
+          </div>
+          <div class="mover-items">
+            <div class="mover-item" *ngFor="let l of topLosers" (click)="viewStockDetails(l.symbol)">
+              <div class="mover-symbol">
+                <span class="font-mono font-bold">{{ l.symbol }}</span>
+                <span class="text-xs text-muted">{{ l.companyName }}</span>
+              </div>
+              <div class="mover-right">
+                <span class="font-mono font-semi">${{ l.price | number:'1.2-2' }}</span>
+                <span class="badge badge-loss font-mono">{{ l.changePercent | number:'1.2-2' }}%</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════════════
+       Active Portfolio Holdings & Recent Orders
+       ══════════════════════════════════════════════════════════════ -->
+  <div class="dashboard-bottom-grid">
+    <!-- Active Holdings Table -->
+    <div class="card holdings-preview-card">
+      <div class="card-header-styled">
+        <div class="header-left">
+          <h3>Active Positions ({{ summary.holdings.length }})</h3>
+        </div>
+        <a routerLink="/portfolio" class="text-xs text-blue">Full Risk & Allocation →</a>
+      </div>
+
+      <div class="table-responsive" *ngIf="summary.holdings.length > 0">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>SYMBOL</th>
+              <th>SHARES</th>
+              <th>AVG BUY</th>
+              <th>CURRENT</th>
+              <th>MARKET VALUE</th>
+              <th>UNREALIZED P&L</th>
+              <th>ACTIONS</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let h of summary.holdings">
+              <td>
+                <div class="holding-sym-wrap">
+                  <span class="font-mono font-bold text-blue">{{ h.symbol }}</span>
+                  <span class="text-xs text-muted">{{ h.companyName }}</span>
+                </div>
+              </td>
+              <td class="font-mono">{{ h.quantity }}</td>
+              <td class="font-mono">${{ h.averageCost | number:'1.2-2' }}</td>
+              <td class="font-mono font-semi">${{ h.currentPrice | number:'1.2-2' }}</td>
+              <td class="font-mono font-bold">${{ h.currentValue | number:'1.2-2' }}</td>
+              <td>
+                <div class="pnl-cell">
+                  <span class="font-mono font-bold" [class.text-green]="h.unrealizedPnl >= 0" [class.text-red]="h.unrealizedPnl < 0">
+                    {{ h.unrealizedPnl >= 0 ? '+' : '' }}${{ h.unrealizedPnl | number:'1.2-2' }}
+                  </span>
+                  <span class="badge" [class.badge-gain]="h.unrealizedPnlPct >= 0" [class.badge-loss]="h.unrealizedPnlPct < 0">
+                    {{ h.unrealizedPnlPct >= 0 ? '+' : '' }}{{ h.unrealizedPnlPct | number:'1.2-2' }}%
+                  </span>
+                </div>
+              </td>
+              <td>
+                <div class="action-buttons-row">
+                  <button class="btn-micro btn-buy" (click)="tradeStock(h.symbol, 'BUY')">BUY</button>
+                  <button class="btn-micro btn-sell" (click)="tradeStock(h.symbol, 'SELL')">SELL</button>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Empty Holdings State -->
+      <div class="empty-state" *ngIf="summary.holdings.length === 0">
+        <div class="empty-icon">📊</div>
+        <h4>No Open Stock Positions</h4>
+        <p class="text-sm text-secondary">You currently have ${{ summary.cashBalance | number:'1.2-2' }} in buying power available to trade.</p>
+        <button class="btn btn-primary btn-sm" (click)="tradeStock('AAPL', 'BUY')">Place Your First Order</button>
+      </div>
+    </div>
+
+    <!-- Recent Order History -->
+    <div class="card recent-orders-card">
+      <div class="card-header-styled">
+        <h3>Recent Executions</h3>
+        <a routerLink="/orders" class="text-xs text-blue">All Orders →</a>
+      </div>
+
+      <div class="recent-orders-list" *ngIf="recentOrders.length > 0">
+        <div class="order-item-card" *ngFor="let o of recentOrders">
+          <div class="order-side-badge" [class.badge-buy]="o.side === 'BUY'" [class.badge-sell]="o.side === 'SELL'">
+            {{ o.side }}
+          </div>
+          <div class="order-main-info">
+            <span class="font-mono font-bold">{{ o.quantity }}x {{ o.symbol }}</span>
+            <span class="text-xs text-muted">{{ o.createdAt | date:'MMM d, h:mm a' }}</span>
+          </div>
+          <div class="order-right-info">
+            <span class="font-mono font-semi">${{ o.executedPrice || o.limitPrice | number:'1.2-2' }}</span>
+            <span class="order-status-pill font-mono">{{ o.status }}</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="empty-state" *ngIf="recentOrders.length === 0">
+        <p class="text-xs text-muted">No trade executions yet. Place your first buy or sell order above!</p>
+      </div>
+    </div>
+  </div>
+</div>

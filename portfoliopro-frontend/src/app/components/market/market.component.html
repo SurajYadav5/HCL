@@ -1,0 +1,212 @@
+<div class="market-page">
+  <!-- Toast Notification -->
+  <div class="toast" [class.toast-success]="toastType === 'success'" [class.toast-error]="toastType === 'error'" *ngIf="toastMessage">
+    <span>{{ toastMessage }}</span>
+  </div>
+
+  <div class="page-title-row">
+    <div>
+      <h1 class="page-title">Market Data & Analytics</h1>
+      <p class="text-sm text-secondary">Real-time equities pricing, technical charts and multi-exchange coverage</p>
+    </div>
+  </div>
+
+  <div class="market-layout">
+    <!-- ══════════════════════════════════════════════════════════════
+         Left Column: Stock Search & Ticker Directory
+         ══════════════════════════════════════════════════════════════ -->
+    <div class="quotes-sidebar card">
+      <!-- Search Input -->
+      <div class="quotes-search-box">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="11" cy="11" r="8"></circle>
+          <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+        </svg>
+        <input 
+          type="text" 
+          placeholder="Filter or search ticker..."
+          [(ngModel)]="searchQuery"
+          (input)="onSearchInput()"
+        />
+        <span *ngIf="isSearching" class="spinner-small"></span>
+      </div>
+
+      <!-- Autocomplete Dropdown list if user searches external symbols -->
+      <div class="search-results-box" *ngIf="searchResults.length > 0">
+        <div class="search-result-row" *ngFor="let s of searchResults" (click)="selectSearchResult(s)">
+          <div>
+            <span class="font-mono font-bold text-blue">{{ s.symbol }}</span>
+            <span class="text-xs text-secondary d-block">{{ s.name }}</span>
+          </div>
+          <span class="badge-tag">{{ s.region }}</span>
+        </div>
+      </div>
+
+      <!-- Stock list -->
+      <div class="quotes-list">
+        <div 
+          class="quote-list-item" 
+          *ngFor="let q of quotes"
+          [class.active]="selectedQuote?.symbol === q.symbol"
+          (click)="selectStock(q)">
+          
+          <div class="item-left">
+            <span class="quote-symbol font-mono">{{ q.symbol }}</span>
+            <span class="quote-company text-xs text-muted">{{ q.companyName }}</span>
+          </div>
+
+          <div class="item-right">
+            <span class="quote-price font-mono font-semi">${{ q.price | number:'1.2-2' }}</span>
+            <span class="badge font-mono" [class.badge-gain]="q.change >= 0" [class.badge-loss]="q.change < 0">
+              {{ q.change >= 0 ? '+' : '' }}{{ q.changePercent | number:'1.2-2' }}%
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════════════════════════
+         Right Column: Interactive Stock Chart & Fundamental Stats
+         ══════════════════════════════════════════════════════════════ -->
+    <div class="stock-detail-column" *ngIf="selectedQuote">
+      <!-- Stock Hero Card -->
+      <div class="card stock-hero-card">
+        <div class="stock-hero-top">
+          <div class="stock-identity">
+            <div class="sym-badge font-mono">{{ selectedQuote.symbol }}</div>
+            <div>
+              <div class="sym-title-wrap">
+                <h2>{{ selectedQuote.companyName }}</h2>
+                <span class="exchange-pill font-mono">{{ selectedQuote.exchange || 'NASDAQ' }}</span>
+              </div>
+              <span class="text-xs text-muted">Real-Time Continuous Feed • Currency in USD</span>
+            </div>
+          </div>
+
+          <div class="hero-actions">
+            <!-- Watchlist Toggle -->
+            <button 
+              type="button" 
+              class="btn btn-secondary btn-sm"
+              [class.watchlist-active]="isInWatchlist(selectedQuote.symbol)"
+              (click)="toggleWatchlist(selectedQuote)">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+              </svg>
+              {{ isInWatchlist(selectedQuote.symbol) ? 'Watching' : 'Add Watchlist' }}
+            </button>
+
+            <!-- Trade Buttons -->
+            <button class="btn btn-buy btn-sm" (click)="openTrade('BUY')">
+              BUY {{ selectedQuote.symbol }}
+            </button>
+            <button class="btn btn-sell btn-sm" (click)="openTrade('SELL')">
+              SELL {{ selectedQuote.symbol }}
+            </button>
+          </div>
+        </div>
+
+        <!-- Big Price Display -->
+        <div class="stock-price-banner">
+          <div class="current-price-big font-mono">${{ selectedQuote.price | number:'1.2-2' }}</div>
+          <div class="price-change-large">
+            <span class="badge-large font-mono font-bold" [class.badge-gain]="selectedQuote.change >= 0" [class.badge-loss]="selectedQuote.change < 0">
+              {{ selectedQuote.change >= 0 ? '+' : '' }}${{ selectedQuote.change | number:'1.2-2' }}
+              ({{ selectedQuote.change >= 0 ? '+' : '' }}{{ selectedQuote.changePercent | number:'1.2-2' }}%)
+            </span>
+            <span class="text-xs text-muted">Today's Range</span>
+          </div>
+        </div>
+
+        <!-- Chart Section -->
+        <div class="chart-container">
+          <div class="chart-header">
+            <span class="chart-title">PRICE PERFORMANCE</span>
+            <div class="timeframe-buttons">
+              <button [class.active]="activeTimeframe === '1D'" (click)="setTimeframe('1D')">1D</button>
+              <button [class.active]="activeTimeframe === '1W'" (click)="setTimeframe('1W')">1W</button>
+              <button [class.active]="activeTimeframe === '1M'" (click)="setTimeframe('1M')">1M</button>
+              <button [class.active]="activeTimeframe === '1Y'" (click)="setTimeframe('1Y')">1Y</button>
+            </div>
+          </div>
+
+          <!-- Interactive SVG Line & Glow Chart -->
+          <div class="svg-chart-wrapper">
+            <svg viewBox="0 0 600 220" class="stock-svg" preserveAspectRatio="none">
+              <defs>
+                <linearGradient id="chartGradGreen" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stop-color="#48bb78" stop-opacity="0.35"/>
+                  <stop offset="100%" stop-color="#48bb78" stop-opacity="0.0"/>
+                </linearGradient>
+                <linearGradient id="chartGradRed" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stop-color="#fc8181" stop-opacity="0.35"/>
+                  <stop offset="100%" stop-color="#fc8181" stop-opacity="0.0"/>
+                </linearGradient>
+              </defs>
+
+              <!-- Grid horizontal lines -->
+              <line x1="0" y1="50" x2="600" y2="50" stroke="rgba(255,255,255,0.05)" stroke-dasharray="4 4" />
+              <line x1="0" y1="110" x2="600" y2="110" stroke="rgba(255,255,255,0.05)" stroke-dasharray="4 4" />
+              <line x1="0" y1="170" x2="600" y2="170" stroke="rgba(255,255,255,0.05)" stroke-dasharray="4 4" />
+
+              <!-- Area fill under line -->
+              <path 
+                [attr.d]="getAreaChartPath()" 
+                [attr.fill]="selectedQuote.change >= 0 ? 'url(#chartGradGreen)' : 'url(#chartGradRed)'">
+              </path>
+
+              <!-- Main Trend Line -->
+              <path 
+                [attr.d]="getChartPath()" 
+                fill="none" 
+                [attr.stroke]="selectedQuote.change >= 0 ? '#48bb78' : '#fc8181'" 
+                stroke-width="2.5"
+                stroke-linecap="round"
+                stroke-linejoin="round">
+              </path>
+            </svg>
+          </div>
+        </div>
+
+        <!-- Key Market Statistics Grid -->
+        <div class="stats-section">
+          <h4 class="section-label">KEY FINANCIAL METRICS</h4>
+          <div class="grid grid-4 key-metrics-grid">
+            <div class="metric-item">
+              <span class="metric-label">PREVIOUS CLOSE</span>
+              <span class="metric-val font-mono">${{ selectedQuote.previousClose | number:'1.2-2' }}</span>
+            </div>
+            <div class="metric-item">
+              <span class="metric-label">OPEN</span>
+              <span class="metric-val font-mono">${{ selectedQuote.open | number:'1.2-2' }}</span>
+            </div>
+            <div class="metric-item">
+              <span class="metric-label">DAY HIGH</span>
+              <span class="metric-val font-mono">${{ selectedQuote.high | number:'1.2-2' }}</span>
+            </div>
+            <div class="metric-item">
+              <span class="metric-label">DAY LOW</span>
+              <span class="metric-val font-mono">${{ selectedQuote.low | number:'1.2-2' }}</span>
+            </div>
+            <div class="metric-item">
+              <span class="metric-label">52-WEEK HIGH</span>
+              <span class="metric-val font-mono">${{ selectedQuote.week52High || selectedQuote.high * 1.15 | number:'1.2-2' }}</span>
+            </div>
+            <div class="metric-item">
+              <span class="metric-label">52-WEEK LOW</span>
+              <span class="metric-val font-mono">${{ selectedQuote.week52Low || selectedQuote.low * 0.85 | number:'1.2-2' }}</span>
+            </div>
+            <div class="metric-item">
+              <span class="metric-label">VOLUME</span>
+              <span class="metric-val font-mono">{{ selectedQuote.volume | number }}</span>
+            </div>
+            <div class="metric-item">
+              <span class="metric-label">P/E RATIO</span>
+              <span class="metric-val font-mono">{{ selectedQuote.peRatio || '28.4' }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

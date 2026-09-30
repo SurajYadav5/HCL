@@ -1,0 +1,183 @@
+<div class="orders-page">
+  <div class="page-title-row">
+    <div>
+      <h1 class="page-title">Trade Execution Audit & History</h1>
+      <p class="text-sm text-secondary">Complete ledger of executed market and limit equity orders</p>
+    </div>
+    <div class="header-actions">
+      <button class="btn btn-secondary btn-sm" (click)="loadOrders(currentPage)">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polyline points="23 4 23 10 17 10"></polyline>
+          <polyline points="1 20 1 14 7 14"></polyline>
+          <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
+        </svg>
+        Refresh Log
+      </button>
+      <a routerLink="/trade" class="btn btn-primary btn-sm">Place Trade</a>
+    </div>
+  </div>
+
+  <!-- KPI Strip -->
+  <div class="grid grid-4 stat-strip">
+    <div class="card stat-mini-card">
+      <span class="stat-mini-label">TOTAL ORDERS PLACED</span>
+      <div class="stat-mini-val font-mono">{{ totalOrders }}</div>
+    </div>
+    <div class="card stat-mini-card">
+      <span class="stat-mini-label">BUY ORDERS</span>
+      <div class="stat-mini-val font-mono text-green">{{ totalBuyCount }}</div>
+    </div>
+    <div class="card stat-mini-card">
+      <span class="stat-mini-label">SELL ORDERS</span>
+      <div class="stat-mini-val font-mono text-red">{{ totalSellCount }}</div>
+    </div>
+    <div class="card stat-mini-card">
+      <span class="stat-mini-label">TOTAL VOLUME SETTLED</span>
+      <div class="stat-mini-val font-mono text-blue">${{ totalVolumeTraded | number:'1.2-2' }}</div>
+    </div>
+  </div>
+
+  <!-- Filter Toolbar & Orders Table -->
+  <div class="card orders-card">
+    <div class="orders-toolbar">
+      <!-- Search filter -->
+      <div class="search-input-box">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="11" cy="11" r="8"></circle>
+          <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+        </svg>
+        <input type="text" placeholder="Search by ticker..." [(ngModel)]="searchSymbol" />
+      </div>
+
+      <!-- Side Filter -->
+      <div class="filter-group">
+        <span class="filter-lbl">SIDE:</span>
+        <div class="filter-pills">
+          <button [class.active]="selectedSideFilter === 'ALL'" (click)="selectedSideFilter = 'ALL'">ALL</button>
+          <button [class.active]="selectedSideFilter === 'BUY'" (click)="selectedSideFilter = 'BUY'">BUY</button>
+          <button [class.active]="selectedSideFilter === 'SELL'" (click)="selectedSideFilter = 'SELL'">SELL</button>
+        </div>
+      </div>
+
+      <!-- Status Filter -->
+      <div class="filter-group">
+        <span class="filter-lbl">STATUS:</span>
+        <div class="filter-pills">
+          <button [class.active]="selectedStatusFilter === 'ALL'" (click)="selectedStatusFilter = 'ALL'">ALL</button>
+          <button [class.active]="selectedStatusFilter === 'EXECUTED'" (click)="selectedStatusFilter = 'EXECUTED'">EXECUTED</button>
+          <button [class.active]="selectedStatusFilter === 'PENDING'" (click)="selectedStatusFilter = 'PENDING'">PENDING</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Orders Table -->
+    <div class="table-responsive" *ngIf="filteredOrders.length > 0">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>ORDER ID</th>
+            <th>DATE & TIME</th>
+            <th>ASSET / TICKER</th>
+            <th>SIDE</th>
+            <th>TYPE</th>
+            <th>SHARES</th>
+            <th>EXEC PRICE</th>
+            <th>TOTAL VALUE</th>
+            <th>STATUS</th>
+            <th>RECEIPT</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let o of filteredOrders">
+            <td class="font-mono text-xs text-muted">#{{ o.id }}</td>
+            <td class="text-xs text-secondary">{{ o.createdAt | date:'MMM d, y, h:mm a' }}</td>
+            <td>
+              <span class="font-mono font-bold text-blue">{{ o.symbol }}</span>
+              <span class="text-xs text-muted d-block">{{ o.companyName }}</span>
+            </td>
+            <td>
+              <span class="badge" [class.badge-gain]="o.side === 'BUY'" [class.badge-loss]="o.side === 'SELL'">
+                {{ o.side }}
+              </span>
+            </td>
+            <td class="font-mono text-xs">{{ o.type }}</td>
+            <td class="font-mono font-semi">{{ o.quantity }}</td>
+            <td class="font-mono">${{ (o.executedPrice || o.limitPrice || 0) | number:'1.2-2' }}</td>
+            <td class="font-mono font-bold">${{ (o.totalValue || 0) | number:'1.2-2' }}</td>
+            <td>
+              <span class="status-tag" [class.status-green]="o.status === 'EXECUTED'" [class.status-gold]="o.status === 'PENDING'">
+                {{ o.status }}
+              </span>
+            </td>
+            <td>
+              <button class="btn-detail" (click)="viewDetails(o)">Audit</button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Empty State -->
+    <div class="empty-state" *ngIf="filteredOrders.length === 0">
+      <div class="empty-icon">📝</div>
+      <h4>No Execution Records Found</h4>
+      <p class="text-sm text-secondary">No trades match your active search or filter criteria.</p>
+    </div>
+
+    <!-- Pagination -->
+    <div class="pagination-bar" *ngIf="totalPages > 1">
+      <button class="page-btn" [disabled]="currentPage === 0" (click)="loadOrders(currentPage - 1)">Previous</button>
+      <span class="page-info text-xs text-secondary font-mono">Page {{ currentPage + 1 }} of {{ totalPages }}</span>
+      <button class="page-btn" [disabled]="currentPage >= totalPages - 1" (click)="loadOrders(currentPage + 1)">Next</button>
+    </div>
+  </div>
+
+  <!-- Detail Modal -->
+  <div class="modal-backdrop" *ngIf="showDetailModal && selectedOrder">
+    <div class="modal-card card glass-card">
+      <div class="modal-header">
+        <h3>Order Audit Receipt</h3>
+        <span class="font-mono text-xs text-muted">ID: #{{ selectedOrder.id }}</span>
+      </div>
+      <div class="modal-body">
+        <div class="receipt-row">
+          <span class="text-secondary text-xs">Security:</span>
+          <span class="font-mono font-bold text-blue">{{ selectedOrder.symbol }} ({{ selectedOrder.companyName }})</span>
+        </div>
+        <div class="receipt-row">
+          <span class="text-secondary text-xs">Execution Side:</span>
+          <span class="badge" [class.badge-gain]="selectedOrder.side === 'BUY'" [class.badge-loss]="selectedOrder.side === 'SELL'">
+            {{ selectedOrder.side }} {{ selectedOrder.type }}
+          </span>
+        </div>
+        <div class="receipt-row">
+          <span class="text-secondary text-xs">Shares Transacted:</span>
+          <span class="font-mono">{{ selectedOrder.quantity }} Shares</span>
+        </div>
+        <div class="receipt-row">
+          <span class="text-secondary text-xs">Execution Price:</span>
+          <span class="font-mono font-semi">${{ selectedOrder.executedPrice | number:'1.2-2' }}</span>
+        </div>
+        <div class="receipt-row">
+          <span class="text-secondary text-xs">Gross Settlement:</span>
+          <span class="font-mono font-bold">${{ selectedOrder.totalValue | number:'1.2-2' }}</span>
+        </div>
+        <div class="receipt-row">
+          <span class="text-secondary text-xs">Brokerage Commission:</span>
+          <span class="font-mono text-green">$0.00</span>
+        </div>
+        <div class="receipt-row">
+          <span class="text-secondary text-xs">Status:</span>
+          <span class="font-mono text-xs text-green">{{ selectedOrder.status }}</span>
+        </div>
+        <div class="receipt-row">
+          <span class="text-secondary text-xs">Executed Timestamp:</span>
+          <span class="font-mono text-xs text-muted">{{ selectedOrder.createdAt | date:'medium' }}</span>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary btn-sm" (click)="closeDetail()">Dismiss</button>
+      </div>
+    </div>
+  </div>
+</div>

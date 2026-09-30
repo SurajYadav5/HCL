@@ -1,0 +1,173 @@
+<div class="analysis-page">
+  <div class="page-title-row">
+    <div>
+      <h1 class="page-title">Technical & Fundamental Analysis</h1>
+      <p class="text-sm text-secondary">Quantitative algorithmic indicators, moving averages and financial valuation</p>
+    </div>
+  </div>
+
+  <!-- Ticker Quick Bar -->
+  <div class="quick-pill-strip">
+    <span class="pill-label font-mono">ANALYZE SECURITY:</span>
+    <button 
+      *ngFor="let t of popularTickers" 
+      class="ticker-pill font-mono"
+      [class.active]="selectedSymbol === t"
+      (click)="selectTicker(t)">
+      {{ t }}
+    </button>
+  </div>
+
+  <!-- Hero Analysis Banner -->
+  <div class="card analysis-hero-card" *ngIf="quote">
+    <div class="hero-left">
+      <div class="sym-badge font-mono">{{ quote.symbol }}</div>
+      <div>
+        <div class="hero-title-row">
+          <h2>{{ quote.companyName }}</h2>
+          <span class="exchange-tag font-mono">{{ quote.exchange || 'NASDAQ' }}</span>
+        </div>
+        <div class="hero-price-row">
+          <span class="price-val font-mono font-bold">${{ quote.price | number:'1.2-2' }}</span>
+          <span class="badge font-mono" [class.badge-gain]="quote.change >= 0" [class.badge-loss]="quote.change < 0">
+            {{ quote.change >= 0 ? '+' : '' }}{{ quote.changePercent | number:'1.2-2' }}%
+          </span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Algorithmic Recommendation Pill -->
+    <div class="rating-box">
+      <span class="rating-label">ALGORITHMIC CONSENSUS</span>
+      <div class="rating-val" [class.buy-glow]="overallRating.includes('BUY')" [class.sell-glow]="overallRating.includes('SELL')">
+        {{ overallRating }}
+      </div>
+      <div class="signals-summary">
+        <span class="text-green font-mono font-bold">{{ bullishCount }} Bullish</span> • 
+        <span class="text-secondary font-mono">{{ neutralCount }} Neutral</span> • 
+        <span class="text-red font-mono font-bold">{{ bearishCount }} Bearish</span>
+      </div>
+      <button class="btn btn-primary btn-sm btn-trade-hero" (click)="tradeNow('BUY')">Execute Trade</button>
+    </div>
+  </div>
+
+  <!-- Two-Column Grid: Technicals & Fundamentals -->
+  <div class="analysis-grid">
+    <!-- ══════════════════════════════════════════════════════════════
+         Column 1: Technical Indicators
+         ══════════════════════════════════════════════════════════════ -->
+    <div class="card technicals-card">
+      <div class="card-header-styled">
+        <div class="header-left">
+          <span class="pulse-dot"></span>
+          <h3>Technical Indicators & Signals</h3>
+        </div>
+        <span class="badge-tag">QUANT DESK</span>
+      </div>
+
+      <!-- Signals Table -->
+      <div class="signals-list">
+        <div class="signal-row" *ngFor="let s of technicalSignals">
+          <div class="signal-left">
+            <span class="signal-name font-semi">{{ s.indicator }}</span>
+            <span class="text-xs text-muted">{{ s.detail }}</span>
+          </div>
+          <div class="signal-right">
+            <span class="signal-val font-mono font-bold">{{ s.value }}</span>
+            <span class="badge font-mono" 
+              [class.badge-gain]="s.interpretation === 'BULLISH'"
+              [class.badge-loss]="s.interpretation === 'BEARISH'"
+              [class.badge-tag]="s.interpretation === 'NEUTRAL'">
+              {{ s.interpretation }}
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <!-- RSI Oscillator Gauge -->
+      <div class="gauge-section" *ngIf="quote">
+        <div class="gauge-header">
+          <span class="text-xs font-bold text-secondary">RSI (14) MOMENTUM OSCILLATOR</span>
+          <span class="font-mono font-bold">{{ rsi14 | number:'1.1-1' }}</span>
+        </div>
+        <div class="rsi-bar-track">
+          <div class="rsi-zone oversold" title="Oversold (<30)"></div>
+          <div class="rsi-zone neutral" title="Neutral (30-70)"></div>
+          <div class="rsi-zone overbought" title="Overbought (>70)"></div>
+          <!-- Pointer -->
+          <div class="rsi-indicator-marker" [style.left.%]="rsi14"></div>
+        </div>
+        <div class="rsi-labels text-xs text-muted font-mono">
+          <span>0 (Oversold)</span>
+          <span>30</span>
+          <span>50</span>
+          <span>70</span>
+          <span>100 (Overbought)</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════════════════════════
+         Column 2: Fundamental Valuation & 52-Week Range
+         ══════════════════════════════════════════════════════════════ -->
+    <div class="card fundamentals-card" *ngIf="quote">
+      <div class="card-header-styled">
+        <h3>Fundamental Valuation</h3>
+        <span class="badge-tag">FINANCIAL RATIOS</span>
+      </div>
+
+      <!-- 52-Week Range Bar -->
+      <div class="range-box">
+        <div class="range-header">
+          <span class="text-xs font-bold text-secondary">52-WEEK PRICE RANGE</span>
+          <span class="font-mono text-xs text-blue">Position: {{ pricePositionInRange | number:'1.0-0' }}% of range</span>
+        </div>
+        <div class="range-bar-track">
+          <div class="range-fill" [style.width.%]="pricePositionInRange"></div>
+        </div>
+        <div class="range-labels font-mono text-xs">
+          <span>Low: ${{ (quote.week52Low || quote.low * 0.85) | number:'1.2-2' }}</span>
+          <span class="font-bold text-primary">${{ quote.price | number:'1.2-2' }}</span>
+          <span>High: ${{ (quote.week52High || quote.high * 1.15) | number:'1.2-2' }}</span>
+        </div>
+      </div>
+
+      <!-- Fundamental Ratios Grid -->
+      <div class="grid grid-2 fundamental-ratios">
+        <div class="fund-item">
+          <span class="fund-label">MARKET CAP</span>
+          <span class="fund-val font-mono">${{ ((quote.marketCap || 2800000000000) / 1000000000) | number:'1.2-2' }}B</span>
+          <span class="fund-sub text-xs text-muted">Mega-Cap Equity</span>
+        </div>
+
+        <div class="fund-item">
+          <span class="fund-label">P/E RATIO (TTM)</span>
+          <span class="fund-val font-mono">{{ quote.peRatio || '32.5' }}</span>
+          <span class="fund-sub text-xs text-muted">Sector Avg: 28.1</span>
+        </div>
+
+        <div class="fund-item">
+          <span class="fund-label">ESTIMATED EPS</span>
+          <span class="fund-val font-mono">${{ (quote.price / (quote.peRatio || 32)) | number:'1.2-2' }}</span>
+          <span class="fund-sub text-xs text-muted">Earnings per share</span>
+        </div>
+
+        <div class="fund-item">
+          <span class="fund-label">VOLUME / LIQUIDITY</span>
+          <span class="fund-val font-mono">{{ quote.volume | number }}</span>
+          <span class="fund-sub text-xs text-green">High Institutional Liquidity</span>
+        </div>
+      </div>
+
+      <!-- Risk Profile Warning / Disclaimer -->
+      <div class="disclaimer-box text-xs text-muted">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="10"></circle>
+          <line x1="12" y1="16" x2="12" y2="12"></line>
+          <line x1="12" y1="8" x2="12.01" y2="8"></line>
+        </svg>
+        <span>Technical indicators and algorithmic models provide probabilistic trend insights and should be combined with risk management.</span>
+      </div>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,220 @@
+.portfolio-page {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.kpi-card {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.kpi-label {
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: var(--text-secondary);
+}
+
+.kpi-value {
+  font-size: 1.7rem;
+  font-weight: 800;
+}
+
+/* ── Allocation Grid ────────────────────────────────────────────── */
+.allocation-grid {
+  display: grid;
+  grid-template-columns: 1.3fr 1fr;
+  gap: 20px;
+}
+
+.allocation-bar-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.allocation-bar {
+  display: flex;
+  height: 14px;
+  border-radius: var(--radius-full);
+  overflow: hidden;
+  background: var(--bg-input);
+}
+
+.bar-segment.equities {
+  background: var(--accent-blue);
+  transition: width 0.5s ease;
+}
+
+.bar-segment.cash {
+  background: var(--green-bright);
+  transition: width 0.5s ease;
+}
+
+.bar-legend {
+  display: flex;
+  gap: 24px;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.legend-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+}
+.legend-dot.equities { background: var(--accent-blue); }
+.legend-dot.cash { background: var(--green-bright); }
+
+.holding-weights-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding-top: 14px;
+  border-top: 1px solid var(--border-subtle);
+}
+
+.weight-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.weight-info {
+  width: 140px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.weight-progress-wrap {
+  flex: 1;
+  height: 6px;
+  background: var(--bg-input);
+  border-radius: var(--radius-full);
+  overflow: hidden;
+}
+
+.weight-progress-bar {
+  height: 100%;
+  background: var(--grad-brand);
+  border-radius: var(--radius-full);
+}
+
+/* ── Risk Indicators ────────────────────────────────────────────── */
+.risk-indicators {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.risk-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 12px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+}
+
+.risk-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.risk-name {
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.risk-badge {
+  font-size: 0.72rem;
+  font-weight: 800;
+  padding: 4px 10px;
+  border-radius: var(--radius-sm);
+}
+.badge-blue { background: rgba(99,179,237,0.15); color: var(--accent-blue); }
+.badge-gold { background: rgba(246,173,85,0.15); color: var(--accent-gold); }
+.badge-cyan { background: rgba(79,209,197,0.15); color: var(--accent-cyan); }
+.badge-green { background: rgba(72,187,120,0.15); color: var(--green-bright); }
+
+/* ── Holdings Table ─────────────────────────────────────────────── */
+.table-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 18px;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.toolbar-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.toolbar-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.filter-input {
+  background: var(--bg-input);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  padding: 6px 12px;
+  color: var(--text-primary);
+  font-size: 0.82rem;
+  width: 220px;
+}
+
+.filter-input:focus {
+  border-color: var(--accent-blue);
+  outline: none;
+}
+
+.sort-buttons {
+  display: flex;
+  background: var(--bg-input);
+  padding: 2px;
+  border-radius: var(--radius-sm);
+  gap: 2px;
+}
+
+.btn-sort {
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 0.72rem;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: 4px;
+  transition: var(--transition-fast);
+}
+.btn-sort.active {
+  background: rgba(255,255,255,0.1);
+  color: #fff;
+}
+
+.sector-tag {
+  font-size: 0.7rem;
+  padding: 2px 6px;
+  border-radius: 4px;
+  background: rgba(255,255,255,0.04);
+  color: var(--text-secondary);
+}
+
+@media (max-width: 960px) {
+  .allocation-grid {
+    grid-template-columns: 1fr;
+  }
+}

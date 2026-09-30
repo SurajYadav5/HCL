@@ -1,0 +1,115 @@
+.watchlist-page {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.watchlist-card {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.add-search-box {
+  position: relative;
+  width: 420px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--bg-input);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  padding: 8px 12px;
+}
+.add-search-box svg { color: var(--accent-blue); }
+.add-search-box input {
+  background: transparent;
+  border: none;
+  outline: none;
+  color: var(--text-primary);
+  font-size: 0.85rem;
+  width: 100%;
+}
+
+.add-dropdown-list {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  right: 0;
+  background: var(--bg-card);
+  border: 1px solid var(--border-medium);
+  border-radius: var(--radius-md);
+  max-height: 220px;
+  overflow-y: auto;
+  z-index: 100;
+  padding: 4px;
+  box-shadow: var(--shadow-lg);
+}
+
+.add-drop-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 10px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: var(--transition-fast);
+}
+.add-drop-item:hover {
+  background: rgba(99,179,237,0.12);
+}
+
+.btn-add-mini {
+  background: var(--accent-blue);
+  color: #0a0e1a;
+  border-radius: 4px;
+  padding: 4px 8px;
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+
+.clickable-row {
+  cursor: pointer;
+}
+.clickable-row:hover {
+  background: rgba(255,255,255,0.03);
+}
+
+.sym-col {
+  display: flex;
+  flex-direction: column;
+}
+
+.btn-trash {
+  background: transparent;
+  color: var(--text-muted);
+  padding: 4px 8px;
+  border-radius: 4px;
+  transition: var(--transition-fast);
+}
+.btn-trash:hover {
+  color: var(--red-bright);
+  background: rgba(252,129,129,0.1);
+}
+
+.quick-add-chips {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.quick-chip {
+  background: rgba(99,179,237,0.1);
+  color: var(--accent-blue);
+  border: 1px solid rgba(99,179,237,0.25);
+  padding: 4px 10px;
+  border-radius: var(--radius-full);
+  font-size: 0.75rem;
+  font-weight: 600;
+  transition: var(--transition-fast);
+}
+.quick-chip:hover {
+  background: var(--accent-blue);
+  color: #0a0e1a;
+}

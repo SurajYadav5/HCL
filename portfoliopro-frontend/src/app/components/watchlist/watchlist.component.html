@@ -1,0 +1,139 @@
+<div class="watchlist-page">
+  <!-- Toast -->
+  <div class="toast toast-success" *ngIf="toastMessage">
+    <span>{{ toastMessage }}</span>
+  </div>
+
+  <div class="page-title-row">
+    <div>
+      <h1 class="page-title">Custom Equities Watchlist</h1>
+      <p class="text-sm text-secondary">Real-time alerts, price tracking and single-click trade execution</p>
+    </div>
+    <div class="header-actions">
+      <button class="btn btn-secondary btn-sm" (click)="loadWatchlist()">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polyline points="23 4 23 10 17 10"></polyline>
+          <polyline points="1 20 1 14 7 14"></polyline>
+          <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
+        </svg>
+        Refresh Watchlist
+      </button>
+    </div>
+  </div>
+
+  <!-- Watchlist KPI Strip -->
+  <div class="grid grid-3 stat-strip">
+    <div class="card stat-mini-card">
+      <span class="stat-mini-label">TRACKED SYMBOLS</span>
+      <div class="stat-mini-val font-mono text-blue">{{ watchlist.length }} Assets</div>
+    </div>
+    <div class="card stat-mini-card">
+      <span class="stat-mini-label">AVERAGE BASKET CHANGE</span>
+      <div class="stat-mini-val font-mono" [class.text-green]="averageChange >= 0" [class.text-red]="averageChange < 0">
+        {{ averageChange >= 0 ? '+' : '' }}{{ averageChange | number:'1.2-2' }}%
+      </div>
+    </div>
+    <div class="card stat-mini-card">
+      <span class="stat-mini-label">FEED STATUS</span>
+      <div class="stat-mini-val font-mono text-green text-lg">● ACTIVE CONTINUOUS</div>
+    </div>
+  </div>
+
+  <!-- Add to Watchlist & Main Table -->
+  <div class="card watchlist-card">
+    <div class="watchlist-toolbar">
+      <!-- Search Input to add stocks -->
+      <div class="add-search-box">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="12" y1="5" x2="12" y2="19"></line>
+          <line x1="5" y1="12" x2="19" y2="12"></line>
+        </svg>
+        <input 
+          type="text" 
+          placeholder="Search and add symbol to watchlist (e.g. AMD, NFLX)..." 
+          [(ngModel)]="addQuery"
+          (input)="onAddInput()"
+        />
+        <span *ngIf="isSearching" class="spinner-small"></span>
+
+        <!-- Dropdown search autocomplete -->
+        <div class="add-dropdown-list" *ngIf="searchResults.length > 0">
+          <div class="add-drop-item" *ngFor="let s of searchResults" (click)="addStock(s.symbol, s.name)">
+            <div>
+              <span class="font-mono font-bold text-blue">{{ s.symbol }}</span>
+              <span class="text-xs text-secondary d-block">{{ s.name }}</span>
+            </div>
+            <button class="btn-add-mini">+ Add</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Watchlist Table -->
+    <div class="table-responsive" *ngIf="watchlist.length > 0">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>SECURITY / TICKER</th>
+            <th>CURRENT PRICE</th>
+            <th>CHANGE ($)</th>
+            <th>CHANGE (%)</th>
+            <th>VOLUME</th>
+            <th>ADDED DATE</th>
+            <th>QUICK ACTIONS</th>
+            <th>REMOVE</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let item of watchlist" (click)="viewDetails(item.symbol)" class="clickable-row">
+            <td>
+              <div class="sym-col">
+                <span class="font-mono font-bold text-blue">{{ item.symbol }}</span>
+                <span class="text-xs text-muted">{{ item.companyName }}</span>
+              </div>
+            </td>
+            <td class="font-mono font-semi">${{ item.price | number:'1.2-2' }}</td>
+            <td class="font-mono" [class.text-green]="item.change >= 0" [class.text-red]="item.change < 0">
+              {{ item.change >= 0 ? '+' : '' }}${{ item.change | number:'1.2-2' }}
+            </td>
+            <td>
+              <span class="badge font-mono font-semi" [class.badge-gain]="item.changePercent >= 0" [class.badge-loss]="item.changePercent < 0">
+                {{ item.changePercent >= 0 ? '+' : '' }}{{ item.changePercent | number:'1.2-2' }}%
+              </span>
+            </td>
+            <td class="font-mono text-muted">{{ item.volume | number }}</td>
+            <td class="text-xs text-secondary">{{ item.addedAt | date:'mediumDate' }}</td>
+            <td>
+              <div class="action-buttons-row">
+                <button class="btn-micro btn-buy" (click)="tradeStock(item.symbol, 'BUY', $event)">BUY</button>
+                <button class="btn-micro btn-sell" (click)="tradeStock(item.symbol, 'SELL', $event)">SELL</button>
+              </div>
+            </td>
+            <td>
+              <button class="btn-trash" (click)="removeStock(item.symbol, $event)" title="Remove from watchlist">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <polyline points="3 6 5 6 21 6"></polyline>
+                  <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                </svg>
+              </button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Empty Watchlist State -->
+    <div class="empty-state" *ngIf="watchlist.length === 0">
+      <div class="empty-icon">⭐</div>
+      <h4>Your Watchlist is Empty</h4>
+      <p class="text-sm text-secondary">Search for stocks above or click on stocks from the Market Data page to pin them here.</p>
+      <div class="quick-add-chips">
+        <span class="text-xs text-muted">Quick add:</span>
+        <button class="quick-chip" (click)="addStock('AAPL', 'Apple Inc.')">+ AAPL</button>
+        <button class="quick-chip" (click)="addStock('NVDA', 'NVIDIA Corp.')">+ NVDA</button>
+        <button class="quick-chip" (click)="addStock('MSFT', 'Microsoft Corp.')">+ MSFT</button>
+        <button class="quick-chip" (click)="addStock('TSLA', 'Tesla Inc.')">+ TSLA</button>
+      </div>
+    </div>
+  </div>
+</div>
