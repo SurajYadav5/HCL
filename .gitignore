@@ -33,3 +33,7 @@ desktop.ini
 .env
 .env.local
 .env.production
+
+# External Projects
+student-attendance-system/
+
