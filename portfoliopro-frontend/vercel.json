@@ -6,7 +6,7 @@
   "rewrites": [
     {
       "source": "/api/:match*",
-      "destination": "https://portfoliopro-backend.onrender.com/api/:match*"
+      "destination": "https://portfoliopro-backend-cwj9.onrender.com/api/:match*"
     },
     {
       "source": "/(.*)",
