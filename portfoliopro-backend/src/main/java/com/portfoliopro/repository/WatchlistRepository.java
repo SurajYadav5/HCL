@@ -10,6 +10,8 @@ import java.util.Optional;
 @Repository
 public interface WatchlistRepository extends JpaRepository<Watchlist, Long> {
 
+    List<Watchlist> findByUserId(Long userId);
+
     List<Watchlist> findByUserIdOrderByAddedAtDesc(Long userId);
 
     Optional<Watchlist> findByUserIdAndSymbol(Long userId, String symbol);

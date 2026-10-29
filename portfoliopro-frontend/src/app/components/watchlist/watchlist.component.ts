@@ -89,6 +89,14 @@ export class WatchlistComponent implements OnInit, OnDestroy {
     this.searchSubject.next(this.addQuery);
   }
 
+  onAddEnter(): void {
+    if (this.searchResults.length > 0) {
+      this.addStock(this.searchResults[0].symbol, this.searchResults[0].name);
+    } else if (this.addQuery.trim()) {
+      this.addStock(this.addQuery.trim().toUpperCase());
+    }
+  }
+
   addStock(symbol: string, companyName?: string): void {
     this.addQuery = '';
     this.searchResults = [];

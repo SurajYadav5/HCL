@@ -1,6 +1,8 @@
 package com.portfoliopro.service;
 
 import com.portfoliopro.dto.response.StockQuoteResponse;
+import com.portfoliopro.entity.Stock;
+import com.portfoliopro.repository.StockRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -25,13 +27,18 @@ public class MarketDataService {
     private String baseUrl;
 
     private final WebClient.Builder webClientBuilder;
+    private final StockRepository stockRepository;
 
     /**
-     * Fetch real-time global quote from Alpha Vantage.
-     * Cached for 60 seconds to respect rate limits.
+     * Fetch real-time global quote: first checks local 100+ stock catalog, then falls back to provider.
      */
     @Cacheable(value = "stockQuotes", key = "#symbol")
     public StockQuoteResponse getQuote(String symbol) {
+        if (symbol == null) return getMockQuote("AAPL");
+        Optional<Stock> stockOpt = stockRepository.findBySymbolIgnoreCase(symbol.trim());
+        if (stockOpt.isPresent()) {
+            return mapStockToQuote(stockOpt.get());
+        }
         try {
             log.info("Fetching quote for symbol: {}", symbol);
             Map<String, Object> response = webClientBuilder.build()
@@ -56,9 +63,24 @@ public class MarketDataService {
     }
 
     /**
-     * Search for stock symbols by keyword.
+     * Search for stock symbols by keyword from local database catalog, with external fallback.
      */
     public List<Map<String, String>> searchSymbols(String keywords) {
+        if (keywords != null && !keywords.trim().isEmpty()) {
+            List<Stock> matches = stockRepository.searchStocks(keywords.trim());
+            if (!matches.isEmpty()) {
+                return matches.stream().limit(15).map(s -> {
+                    Map<String, String> m = new HashMap<>();
+                    m.put("symbol", s.getSymbol());
+                    m.put("name", s.getCompanyName());
+                    m.put("type", "Equity");
+                    m.put("region", s.getSector() != null ? s.getSector() : "United States");
+                    m.put("currency", "USD");
+                    m.put("price", s.getPrice() != null ? s.getPrice().toString() : "0.00");
+                    return m;
+                }).toList();
+            }
+        }
         try {
             Map<String, Object> response = webClientBuilder.build()
                     .get()
@@ -206,7 +228,7 @@ public class MarketDataService {
                 .change(ch)
                 .changePercent(chPct)
                 .volume((long)(rand.nextInt(50000000) + 1000000))
-                .marketCap(price.multiply(BigDecimal.valueOf(rand.nextInt(10000000000L > 0 ? 10000000000 : 1))))
+                .marketCap(price.multiply(BigDecimal.valueOf(1000000000L + rand.nextInt(1000000000))))
                 .peRatio(BigDecimal.valueOf(15 + rand.nextDouble() * 30))
                 .week52High(price.multiply(BigDecimal.valueOf(1.3)))
                 .week52Low(price.multiply(BigDecimal.valueOf(0.7)))
@@ -281,6 +303,61 @@ public class MarketDataService {
         } catch (Exception e) {
             return BigDecimal.ZERO;
         }
+    }
+
+    public List<StockQuoteResponse> getAllStocksFromDb() {
+        List<Stock> all = stockRepository.findAllByOrderByMarketCapDesc();
+        if (all.isEmpty()) {
+            return List.of(
+                getMockQuote("AAPL"), getMockQuote("MSFT"), getMockQuote("NVDA"),
+                getMockQuote("GOOGL"), getMockQuote("AMZN"), getMockQuote("TSLA"),
+                getMockQuote("META"), getMockQuote("JPM")
+            );
+        }
+        return all.stream().map(this::mapStockToQuote).toList();
+    }
+
+    public List<StockQuoteResponse> getStocksBySector(String sector) {
+        if (sector == null || sector.equalsIgnoreCase("ALL")) {
+            return getAllStocksFromDb();
+        }
+        return stockRepository.findBySectorIgnoreCase(sector).stream()
+                .map(this::mapStockToQuote)
+                .toList();
+    }
+
+    public List<String> getAllSectors() {
+        return stockRepository.findAllSectors();
+    }
+
+    public StockQuoteResponse mapStockToQuote(Stock s) {
+        BigDecimal dayHigh = s.getDayHigh() != null ? s.getDayHigh() : s.getPrice().multiply(BigDecimal.valueOf(1.02)).setScale(2, java.math.RoundingMode.HALF_UP);
+        BigDecimal dayLow = s.getDayLow() != null ? s.getDayLow() : s.getPrice().multiply(BigDecimal.valueOf(0.98)).setScale(2, java.math.RoundingMode.HALF_UP);
+        BigDecimal openPrice = s.getOpenPrice() != null ? s.getOpenPrice() : s.getPrice();
+        BigDecimal prevClose = s.getPreviousClose() != null ? s.getPreviousClose() : s.getPrice();
+        BigDecimal change = s.getChangeAmount() != null ? s.getChangeAmount() : s.getPrice().subtract(prevClose);
+        BigDecimal changePct = s.getChangePercent() != null ? s.getChangePercent() : BigDecimal.ZERO;
+
+        return StockQuoteResponse.builder()
+                .symbol(s.getSymbol())
+                .companyName(s.getCompanyName())
+                .sector(s.getSector())
+                .price(s.getPrice())
+                .open(openPrice)
+                .high(dayHigh)
+                .low(dayLow)
+                .previousClose(prevClose)
+                .change(change)
+                .changePercent(changePct)
+                .volume(s.getVolume() != null ? s.getVolume() : 25000000L)
+                .avgVolume(s.getAvgVolume() != null ? s.getAvgVolume() : 30000000L)
+                .marketCap(s.getMarketCap() != null ? s.getMarketCap() : s.getPrice().multiply(BigDecimal.valueOf(2000000000L)))
+                .peRatio(s.getPeRatio() != null ? s.getPeRatio() : BigDecimal.valueOf(28.5))
+                .week52High(s.getWeek52High() != null ? s.getWeek52High() : s.getPrice().multiply(BigDecimal.valueOf(1.25)).setScale(2, java.math.RoundingMode.HALF_UP))
+                .week52Low(s.getWeek52Low() != null ? s.getWeek52Low() : s.getPrice().multiply(BigDecimal.valueOf(0.75)).setScale(2, java.math.RoundingMode.HALF_UP))
+                .exchange(s.getExchange() != null ? s.getExchange() : "NASDAQ")
+                .lastUpdated(s.getLastUpdated() != null ? s.getLastUpdated().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME) : LocalDateTime.now().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME))
+                .build();
     }
 
     private Long parseLong(String value) {

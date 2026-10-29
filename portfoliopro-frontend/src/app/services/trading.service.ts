@@ -23,4 +23,8 @@ export class TradingService {
   getOrderById(orderId: number): Observable<ApiResponse<Order>> {
     return this.http.get<ApiResponse<Order>>(`${this.API}/${orderId}`);
   }
+
+  cancelOrder(orderId: number): Observable<ApiResponse<Order>> {
+    return this.http.post<ApiResponse<Order>>(`${this.API}/${orderId}/cancel`, {});
+  }
 }

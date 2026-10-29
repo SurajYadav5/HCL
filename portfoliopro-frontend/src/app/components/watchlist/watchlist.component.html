@@ -53,6 +53,7 @@
           placeholder="Search and add symbol to watchlist (e.g. AMD, NFLX)..." 
           [(ngModel)]="addQuery"
           (input)="onAddInput()"
+          (keydown.enter)="onAddEnter()"
         />
         <span *ngIf="isSearching" class="spinner-small"></span>
 

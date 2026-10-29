@@ -6,16 +6,27 @@
     </div>
   </div>
 
-  <!-- Ticker Quick Bar -->
-  <div class="quick-pill-strip">
-    <span class="pill-label font-mono">ANALYZE SECURITY:</span>
-    <button 
-      *ngFor="let t of popularTickers" 
-      class="ticker-pill font-mono"
-      [class.active]="selectedSymbol === t"
-      (click)="selectTicker(t)">
-      {{ t }}
-    </button>
+  <!-- Ticker Quick Bar & Search -->
+  <div class="analysis-ticker-bar">
+    <div class="quick-pill-strip">
+      <span class="pill-label font-mono">QUICK SELECT:</span>
+      <button 
+        *ngFor="let t of popularTickers" 
+        class="ticker-pill font-mono"
+        [class.active]="selectedSymbol === t"
+        (click)="selectTicker(t)">
+        {{ t }}
+      </button>
+    </div>
+    <div class="analyze-search-box">
+      <input 
+        type="text" 
+        placeholder="Analyze any ticker (e.g. LLY, JNJ, AMD)..." 
+        [(ngModel)]="customSymbol" 
+        (keydown.enter)="onAnalyzeEnter()"
+      />
+      <button class="btn btn-secondary btn-sm" (click)="onAnalyzeEnter()">Analyze</button>
+    </div>
   </div>
 
   <!-- Hero Analysis Banner -->

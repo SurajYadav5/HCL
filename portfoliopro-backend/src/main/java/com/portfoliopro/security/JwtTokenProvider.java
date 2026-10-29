@@ -28,14 +28,16 @@ public class JwtTokenProvider {
     private long refreshExpirationMs;
 
     private Key getSigningKey() {
-        byte[] keyBytes = Decoders.BASE64.encode(jwtSecret.getBytes()).getBytes();
-        // Use the secret bytes directly if long enough
-        byte[] secretBytes = jwtSecret.getBytes();
+        byte[] secretBytes = jwtSecret.getBytes(java.nio.charset.StandardCharsets.UTF_8);
         if (secretBytes.length >= 64) {
             return Keys.hmacShaKeyFor(secretBytes);
         }
-        return Keys.hmacShaKeyFor(Decoders.BASE64.decode(
-            java.util.Base64.getEncoder().encodeToString(secretBytes)));
+        try {
+            java.security.MessageDigest md = java.security.MessageDigest.getInstance("SHA-512");
+            return Keys.hmacShaKeyFor(md.digest(secretBytes));
+        } catch (java.security.NoSuchAlgorithmException e) {
+            return Keys.hmacShaKeyFor(java.util.Arrays.copyOf(secretBytes, 64));
+        }
     }
 
     public String generateToken(UserDetails userDetails) {

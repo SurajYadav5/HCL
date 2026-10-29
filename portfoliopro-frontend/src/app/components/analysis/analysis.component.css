@@ -4,6 +4,35 @@
   gap: 20px;
 }
 
+.analysis-ticker-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.analyze-search-box {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  padding: 4px 6px 4px 12px;
+}
+
+.analyze-search-box input {
+  background: transparent;
+  border: none;
+  outline: none;
+  color: var(--text-primary);
+  font-size: 0.82rem;
+  width: 220px;
+  font-family: var(--font-mono);
+  text-transform: uppercase;
+}
+
 .analysis-hero-card {
   display: flex;
   justify-content: space-between;

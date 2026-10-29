@@ -1,0 +1,16 @@
+services:
+  - type: web
+    name: portfoliopro-backend
+    env: docker
+    dockerfilePath: ./portfoliopro-backend/Dockerfile
+    dockerContext: ./portfoliopro-backend
+    plan: free
+    region: oregon
+    healthCheckPath: /api/actuator/health
+    envVars:
+      - key: PORT
+        value: 8080
+      - key: SPRING_PROFILES_ACTIVE
+        value: cloud
+      - key: APP_CORS_ALLOWED_ORIGINS
+        value: "https://*.vercel.app,http://localhost:4200"

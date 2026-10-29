@@ -21,6 +21,7 @@ USER appuser
 COPY --from=build /app/target/*.jar app.jar
 
 ENV PORT=8080
+ENV SPRING_PROFILES_ACTIVE=cloud
 EXPOSE 8080
 
-ENTRYPOINT ["java", "-jar", "app.jar"]
+ENTRYPOINT ["java", "-Djava.security.egd=file:/dev/./urandom", "-jar", "app.jar"]

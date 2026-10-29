@@ -193,6 +193,34 @@ public class TradingService {
         return mapToOrderResponse(order);
     }
 
+    @Transactional
+    public OrderResponse cancelOrder(String username, Long orderId) {
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new ResourceNotFoundException("User", "username", username));
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new ResourceNotFoundException("Order", "id", orderId));
+
+        if (!order.getUser().getId().equals(user.getId())) {
+            throw new BadRequestException("Access denied to this order");
+        }
+
+        if (order.getStatus() != OrderStatus.PENDING) {
+            throw new BadRequestException("Only PENDING orders can be cancelled. Order #" + orderId + " is currently " + order.getStatus());
+        }
+
+        order.setStatus(OrderStatus.CANCELLED);
+        order.setNotes("Cancelled by trader at " + LocalDateTime.now());
+
+        if (order.getSide() == OrderSide.BUY && order.getTotalValue() != null) {
+            user.setCashBalance(user.getCashBalance().add(order.getTotalValue()));
+            userRepository.save(user);
+        }
+
+        Order saved = orderRepository.save(order);
+        log.info("Order #{} cancelled successfully by {}", orderId, username);
+        return mapToOrderResponse(saved);
+    }
+
     private OrderResponse mapToOrderResponse(Order order) {
         return OrderResponse.builder()
                 .id(order.getId())

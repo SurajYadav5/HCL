@@ -37,6 +37,7 @@ export interface User {
 export interface StockQuote {
   symbol: string;
   companyName: string;
+  sector?: string;
   price: number;
   open: number;
   high: number;

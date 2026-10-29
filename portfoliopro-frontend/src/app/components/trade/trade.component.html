@@ -2,11 +2,24 @@
   <div class="page-title-row">
     <div>
       <h1 class="page-title">Order Execution Desk</h1>
-      <p class="text-sm text-secondary">High-frequency order routing, market & limit execution engine</p>
+      <p class="text-sm text-secondary">
+        Direct market access execution engine &bull; 
+        <span class="font-mono text-blue font-bold">107 Equities Supported</span>
+      </p>
+    </div>
+    <div class="header-actions">
+      <button class="btn btn-secondary btn-sm" (click)="showStockPicker = !showStockPicker">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="11" cy="11" r="8"></circle>
+          <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+        </svg>
+        Browse All 107 Tickers
+      </button>
+      <a routerLink="/orders" class="btn btn-secondary btn-sm">Audit Ledger</a>
     </div>
   </div>
 
-  <!-- Ticker Quick Pills -->
+  <!-- Ticker Quick Select Strip -->
   <div class="quick-pill-strip">
     <span class="pill-label font-mono">QUICK SELECT:</span>
     <button 
@@ -16,6 +29,70 @@
       (click)="selectSymbol(t)">
       {{ t }}
     </button>
+    <button class="ticker-pill font-mono more-pill" (click)="showStockPicker = true">
+      + More (107)
+    </button>
+  </div>
+
+  <!-- Stock Catalog Picker Modal / Overlay -->
+  <div class="modal-backdrop" *ngIf="showStockPicker">
+    <div class="modal-card card picker-modal">
+      <div class="modal-header">
+        <div>
+          <h3>Select Equity from 107 Database Assets</h3>
+          <span class="text-xs text-muted">Click any ticker to populate the trade ticket</span>
+        </div>
+        <button class="btn-close-picker" (click)="showStockPicker = false">&times;</button>
+      </div>
+
+      <div class="picker-search-bar">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="11" cy="11" r="8"></circle>
+          <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+        </svg>
+        <input 
+          type="text" 
+          placeholder="Search by symbol or company name..."
+          [(ngModel)]="stockPickerSearch"
+          autofocus
+        />
+      </div>
+
+      <!-- Category Filter Pills -->
+      <div class="picker-category-tabs">
+        <button [class.active]="stockCategory === 'ALL'" (click)="stockCategory = 'ALL'">ALL ({{ allStocks.length }})</button>
+        <button [class.active]="stockCategory === 'HOLDINGS'" (click)="stockCategory = 'HOLDINGS'">
+          MY HOLDINGS ({{ portfolio?.holdings?.length || 0 }})
+        </button>
+        <button [class.active]="stockCategory === 'TECH'" (click)="stockCategory = 'TECH'">TECHNOLOGY</button>
+        <button [class.active]="stockCategory === 'FINANCE'" (click)="stockCategory = 'FINANCE'">FINANCIALS</button>
+        <button [class.active]="stockCategory === 'ENERGY'" (click)="stockCategory = 'ENERGY'">ENERGY</button>
+      </div>
+
+      <!-- Picker Stock Grid -->
+      <div class="picker-grid">
+        <div 
+          *ngFor="let s of filteredPickerStocks" 
+          class="picker-stock-card"
+          [class.active]="symbol === s.symbol"
+          (click)="selectSymbol(s.symbol)">
+          <div class="picker-card-left">
+            <span class="font-mono font-bold text-blue">{{ s.symbol }}</span>
+            <span class="text-xs text-muted d-block truncate">{{ s.companyName }}</span>
+          </div>
+          <div class="picker-card-right">
+            <span class="font-mono font-semi">${{ s.price | number:'1.2-2' }}</span>
+            <span class="badge font-mono" [class.badge-gain]="s.change >= 0" [class.badge-loss]="s.change < 0">
+              {{ s.change >= 0 ? '+' : '' }}{{ s.changePercent | number:'1.2-2' }}%
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn btn-secondary btn-sm" (click)="showStockPicker = false">Close</button>
+      </div>
+    </div>
   </div>
 
   <div class="trade-grid">
@@ -65,7 +142,10 @@
         <!-- Selected Stock Info Banner -->
         <div class="stock-quote-bar" *ngIf="currentQuote">
           <div class="quote-info">
-            <span class="sym-tag font-mono font-bold">{{ currentQuote.symbol }}</span>
+            <div class="symbol-with-picker-link">
+              <span class="sym-tag font-mono font-bold">{{ currentQuote.symbol }}</span>
+              <button class="picker-link-btn" (click)="showStockPicker = true" title="Select different stock">Change</button>
+            </div>
             <span class="text-xs text-muted">{{ currentQuote.companyName }}</span>
           </div>
           <div class="quote-price-info">
@@ -76,9 +156,38 @@
           </div>
         </div>
 
-        <!-- Symbol Input -->
+        <!-- Portfolio Holdings Quick Select for SELL orders -->
+        <div class="portfolio-holding-pills" *ngIf="side === 'SELL' && portfolio && portfolio.holdings.length > 0">
+          <span class="text-xs text-muted font-mono">YOUR OPEN POSITIONS:</span>
+          <div class="holding-chips">
+            <button 
+              *ngFor="let h of portfolio.holdings" 
+              class="holding-chip font-mono"
+              [class.active]="symbol === h.symbol"
+              (click)="selectSymbol(h.symbol)">
+              {{ h.symbol }} ({{ h.quantity }})
+            </button>
+          </div>
+        </div>
+
+        <!-- Warning when SELL is selected but 0 shares owned -->
+        <div class="alert alert-warning" *ngIf="side === 'SELL' && (!currentHolding || currentHolding.quantity <= 0)">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"></circle>
+            <line x1="12" y1="8" x2="12" y2="12"></line>
+            <line x1="12" y1="16" x2="12.01" y2="16"></line>
+          </svg>
+          <span class="text-xs">
+            <strong>Position Notice:</strong> You hold 0 shares of {{ symbol }}. Select a security from your portfolio above, or switch to BUY.
+          </span>
+        </div>
+
+        <!-- Symbol Input & Direct Browse -->
         <div class="form-group">
-          <label>Ticker Symbol</label>
+          <div class="label-row">
+            <label>Ticker Symbol</label>
+            <span class="text-xs text-blue cursor-pointer" (click)="showStockPicker = true">Browse all 107</span>
+          </div>
           <div class="input-wrap">
             <input 
               type="text" 
@@ -92,7 +201,15 @@
 
         <!-- Limit Price Input (if LIMIT) -->
         <div class="form-group" *ngIf="type === 'LIMIT'">
-          <label>Limit Price ($)</label>
+          <div class="label-row">
+            <label>Limit Price ($)</label>
+            <!-- Quick preset adjusters -->
+            <div class="limit-helpers">
+              <button type="button" class="btn-limit-adj" (click)="adjustLimitPrice(-1)">-1%</button>
+              <button type="button" class="btn-limit-adj" (click)="adjustLimitPrice(0)">Current</button>
+              <button type="button" class="btn-limit-adj" (click)="adjustLimitPrice(1)">+1%</button>
+            </div>
+          </div>
           <input 
             type="number" 
             step="0.01" 
@@ -106,8 +223,8 @@
         <div class="form-group">
           <div class="label-row">
             <label>Quantity (Shares)</label>
-            <span class="text-xs text-secondary">
-              {{ side === 'BUY' ? 'Max Affordable: ' + (portfolio ? (portfolio.cashBalance / effectivePrice | number:'1.0-0') : 0) : 'Owned: ' + (currentHolding?.quantity || 0) }}
+            <span class="text-xs text-secondary font-mono">
+              {{ side === 'BUY' ? 'Max Affordable: ' + (portfolio && effectivePrice > 0 ? (portfolio.cashBalance / effectivePrice | number:'1.0-0') : 0) : 'Owned: ' + (currentHolding?.quantity || 0) + ' Shares' }}
             </span>
           </div>
           <input 
@@ -130,20 +247,20 @@
         <!-- Order Summary Breakdown -->
         <div class="order-breakdown card">
           <div class="breakdown-row">
-            <span class="text-secondary text-xs">ORDER TYPE</span>
+            <span class="text-secondary text-xs">ORDER ROUTING</span>
             <span class="font-mono text-xs">{{ side }} {{ type }}</span>
           </div>
           <div class="breakdown-row">
-            <span class="text-secondary text-xs">ESTIMATED PRICE</span>
+            <span class="text-secondary text-xs">UNIT EXECUTION PRICE</span>
             <span class="font-mono text-xs">${{ effectivePrice | number:'1.2-2' }}</span>
           </div>
           <div class="breakdown-row">
-            <span class="text-secondary text-xs">COMMISSION</span>
+            <span class="text-secondary text-xs">BROKERAGE COMMISSION</span>
             <span class="font-mono text-xs text-green">$0.00 (FREE)</span>
           </div>
           <div class="breakdown-divider"></div>
           <div class="breakdown-row total-row">
-            <span class="font-semi">ESTIMATED TOTAL</span>
+            <span class="font-semi">TOTAL ESTIMATE</span>
             <span class="font-mono font-bold text-lg">${{ estimatedTotal | number:'1.2-2' }}</span>
           </div>
         </div>
@@ -168,7 +285,15 @@
           (click)="submitOrder()">
           <span *ngIf="isSubmitting" class="spinner-small"></span>
           <span *ngIf="!isSubmitting">
-            Execute {{ side }} {{ quantity }} Shares of {{ symbol }}
+            <ng-container *ngIf="side === 'BUY'">
+              Execute BUY {{ quantity }} Shares of {{ symbol }} (${{ estimatedTotal | number:'1.2-2' }})
+            </ng-container>
+            <ng-container *ngIf="side === 'SELL'">
+              <span *ngIf="!currentHolding || currentHolding.quantity <= 0">Cannot SELL (0 Shares Owned)</span>
+              <span *ngIf="currentHolding && currentHolding.quantity > 0">
+                Execute SELL {{ quantity }} Shares of {{ symbol }} (${{ estimatedTotal | number:'1.2-2' }})
+              </span>
+            </ng-container>
           </span>
         </button>
       </div>
@@ -188,7 +313,7 @@
       <!-- Current Position in Selected Ticker -->
       <div class="card position-stat-card">
         <h4>Position in {{ symbol }}</h4>
-        <div *ngIf="currentHolding">
+        <div *ngIf="currentHolding && currentHolding.quantity > 0">
           <div class="position-metric-row">
             <span class="text-xs text-secondary">SHARES OWNED</span>
             <span class="font-mono font-semi">{{ currentHolding.quantity }}</span>
@@ -208,7 +333,7 @@
             </span>
           </div>
         </div>
-        <div *ngIf="!currentHolding" class="no-position-text">
+        <div *ngIf="!currentHolding || currentHolding.quantity <= 0" class="no-position-text">
           <span class="text-xs text-muted">You do not currently own any shares of {{ symbol }}.</span>
         </div>
       </div>
@@ -217,9 +342,9 @@
       <div class="card execution-rules-card">
         <h4>Trading Guidelines</h4>
         <ul class="guidelines-list text-xs text-secondary">
-          <li>✓ Market orders execute instantly at the current best ask/bid.</li>
-          <li>✓ Limit orders trigger when the specified limit price is satisfied.</li>
-          <li>✓ Paper trading simulated fills replicate live market slippage.</li>
+          <li>✓ Market orders execute instantly at the current continuous price.</li>
+          <li>✓ Limit orders trigger when the specified limit price condition is satisfied.</li>
+          <li>✓ Institutional simulated routing replicates live market conditions.</li>
           <li>✓ All executions update your portfolio balance and transaction history in real-time.</li>
         </ul>
       </div>
@@ -258,7 +383,7 @@
         </div>
         <div class="receipt-row">
           <span class="text-secondary text-xs">FILLED PRICE</span>
-          <span class="font-mono font-semi">${{ lastExecutedOrder.executedPrice | number:'1.2-2' }}</span>
+          <span class="font-mono font-semi">${{ (lastExecutedOrder.executedPrice || lastExecutedOrder.limitPrice || 0) | number:'1.2-2' }}</span>
         </div>
         <div class="receipt-row">
           <span class="text-secondary text-xs">COMMISSION</span>
@@ -267,7 +392,7 @@
         <div class="receipt-divider"></div>
         <div class="receipt-row total-receipt-row">
           <span>NET SETTLEMENT</span>
-          <span class="font-mono font-bold text-lg">${{ lastExecutedOrder.totalValue | number:'1.2-2' }}</span>
+          <span class="font-mono font-bold text-lg">${{ (lastExecutedOrder.totalValue || 0) | number:'1.2-2' }}</span>
         </div>
         <div class="receipt-row">
           <span class="text-secondary text-xs">EXECUTION TIME</span>
@@ -277,6 +402,7 @@
 
       <div class="modal-footer">
         <button class="btn btn-secondary btn-sm" (click)="closeReceipt()">Trade Again</button>
+        <a routerLink="/orders" class="btn btn-secondary btn-sm" (click)="closeReceipt()">View in Ledger</a>
         <a routerLink="/portfolio" class="btn btn-primary btn-sm" (click)="closeReceipt()">View Portfolio</a>
       </div>
     </div>

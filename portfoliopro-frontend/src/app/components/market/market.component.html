@@ -6,52 +6,96 @@
 
   <div class="page-title-row">
     <div>
-      <h1 class="page-title">Market Data & Analytics</h1>
-      <p class="text-sm text-secondary">Real-time equities pricing, technical charts and multi-exchange coverage</p>
+      <h1 class="page-title">Equities Market Terminal</h1>
+      <p class="text-sm text-secondary">
+        Institutional multi-exchange coverage across 10 sectors &bull; 
+        <span class="font-mono text-blue font-bold">{{ quotes.length }} Active Equities</span>
+      </p>
     </div>
+    <div class="market-header-stats">
+      <div class="header-stat-pill">
+        <span class="stat-dot green"></span>
+        <span class="text-xs text-muted">EXCHANGES:</span>
+        <span class="font-mono text-xs font-bold">NASDAQ &bull; NYSE</span>
+      </div>
+      <div class="header-stat-pill">
+        <span class="text-xs text-muted">FEED:</span>
+        <span class="font-mono text-xs text-green">CONTINUOUS L1</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Sector Navigation Bar -->
+  <div class="sector-pills-bar">
+    <button 
+      *ngFor="let s of sectors" 
+      class="sector-pill" 
+      [class.active]="selectedSector === s"
+      (click)="setSector(s)">
+      <span>{{ s }}</span>
+      <span class="sector-count-tag font-mono">{{ getSectorCount(s) }}</span>
+    </button>
   </div>
 
   <div class="market-layout">
     <!-- ══════════════════════════════════════════════════════════════
-         Left Column: Stock Search & Ticker Directory
+         Left Column: Stock Search & Ticker Directory (107 Stocks)
          ══════════════════════════════════════════════════════════════ -->
     <div class="quotes-sidebar card">
-      <!-- Search Input -->
+      <!-- Search Input Filter -->
       <div class="quotes-search-box">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <circle cx="11" cy="11" r="8"></circle>
           <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
         </svg>
         <input 
           type="text" 
-          placeholder="Filter or search ticker..."
-          [(ngModel)]="searchQuery"
-          (input)="onSearchInput()"
+          placeholder="Filter 100+ tickers or names..."
+          [(ngModel)]="filterSearch"
         />
-        <span *ngIf="isSearching" class="spinner-small"></span>
+        <button *ngIf="filterSearch" class="clear-search-btn" (click)="filterSearch = ''">&times;</button>
       </div>
 
-      <!-- Autocomplete Dropdown list if user searches external symbols -->
-      <div class="search-results-box" *ngIf="searchResults.length > 0">
-        <div class="search-result-row" *ngFor="let s of searchResults" (click)="selectSearchResult(s)">
-          <div>
-            <span class="font-mono font-bold text-blue">{{ s.symbol }}</span>
-            <span class="text-xs text-secondary d-block">{{ s.name }}</span>
-          </div>
-          <span class="badge-tag">{{ s.region }}</span>
+      <!-- Sorting Bar -->
+      <div class="directory-sort-strip">
+        <span class="sort-label text-xs text-muted">SORT:</span>
+        <div class="sort-pill-group">
+          <button class="sort-mini-pill" [class.active]="sortBy === 'symbol'" (click)="setSort('symbol')">
+            Ticker {{ sortBy === 'symbol' ? (sortOrder === 'asc' ? '↑' : '↓') : '' }}
+          </button>
+          <button class="sort-mini-pill" [class.active]="sortBy === 'change'" (click)="setSort('change')">
+            % Chg {{ sortBy === 'change' ? (sortOrder === 'desc' ? '↓' : '↑') : '' }}
+          </button>
+          <button class="sort-mini-pill" [class.active]="sortBy === 'price'" (click)="setSort('price')">
+            Price {{ sortBy === 'price' ? (sortOrder === 'desc' ? '↓' : '↑') : '' }}
+          </button>
+          <button class="sort-mini-pill" [class.active]="sortBy === 'volume'" (click)="setSort('volume')">
+            Vol {{ sortBy === 'volume' ? (sortOrder === 'desc' ? '↓' : '↑') : '' }}
+          </button>
         </div>
       </div>
 
-      <!-- Stock list -->
+      <!-- Directory Count Indicator -->
+      <div class="directory-count-bar">
+        <span class="text-xs text-muted">
+          Showing <strong class="text-primary font-mono">{{ filteredQuotes.length }}</strong> of {{ quotes.length }} equities
+        </span>
+        <span *ngIf="selectedSector !== 'ALL'" class="badge-sector-filter font-mono">{{ selectedSector }}</span>
+      </div>
+
+      <!-- Stock list (scrollable list of 107 equities) -->
       <div class="quotes-list">
         <div 
           class="quote-list-item" 
-          *ngFor="let q of quotes"
+          *ngFor="let q of filteredQuotes"
           [class.active]="selectedQuote?.symbol === q.symbol"
           (click)="selectStock(q)">
           
           <div class="item-left">
-            <span class="quote-symbol font-mono">{{ q.symbol }}</span>
+            <div class="symbol-sector-row">
+              <span class="quote-symbol font-mono">{{ q.symbol }}</span>
+              <span class="quote-sector-tag" *ngIf="q.sector">{{ q.sector }}</span>
+            </div>
             <span class="quote-company text-xs text-muted">{{ q.companyName }}</span>
           </div>
 
@@ -61,6 +105,11 @@
               {{ q.change >= 0 ? '+' : '' }}{{ q.changePercent | number:'1.2-2' }}%
             </span>
           </div>
+        </div>
+
+        <div class="no-stocks-match" *ngIf="filteredQuotes.length === 0">
+          <p class="text-xs text-muted">No tickers match "{{ filterSearch }}" in {{ selectedSector }}</p>
+          <button class="btn btn-secondary btn-xs" (click)="filterSearch = ''; selectedSector = 'ALL'">Reset Filters</button>
         </div>
       </div>
     </div>
@@ -78,8 +127,9 @@
               <div class="sym-title-wrap">
                 <h2>{{ selectedQuote.companyName }}</h2>
                 <span class="exchange-pill font-mono">{{ selectedQuote.exchange || 'NASDAQ' }}</span>
+                <span class="sector-pill-badge" *ngIf="selectedQuote.sector">{{ selectedQuote.sector }}</span>
               </div>
-              <span class="text-xs text-muted">Real-Time Continuous Feed • Currency in USD</span>
+              <span class="text-xs text-muted">Real-Time Institutional Continuous Feed &bull; USD</span>
             </div>
           </div>
 
@@ -106,24 +156,52 @@
           </div>
         </div>
 
-        <!-- Big Price Display -->
+        <!-- Big Price Display & Timeframe Delta -->
         <div class="stock-price-banner">
-          <div class="current-price-big font-mono">${{ selectedQuote.price | number:'1.2-2' }}</div>
-          <div class="price-change-large">
-            <span class="badge-large font-mono font-bold" [class.badge-gain]="selectedQuote.change >= 0" [class.badge-loss]="selectedQuote.change < 0">
-              {{ selectedQuote.change >= 0 ? '+' : '' }}${{ selectedQuote.change | number:'1.2-2' }}
-              ({{ selectedQuote.change >= 0 ? '+' : '' }}{{ selectedQuote.changePercent | number:'1.2-2' }}%)
+          <div class="price-side-left">
+            <div class="current-price-big font-mono">${{ selectedQuote.price | number:'1.2-2' }}</div>
+            <div class="price-change-large">
+              <span class="badge-large font-mono font-bold" [class.badge-gain]="selectedQuote.change >= 0" [class.badge-loss]="selectedQuote.change < 0">
+                {{ selectedQuote.change >= 0 ? '+' : '' }}${{ selectedQuote.change | number:'1.2-2' }}
+                ({{ selectedQuote.change >= 0 ? '+' : '' }}{{ selectedQuote.changePercent | number:'1.2-2' }}%)
+              </span>
+              <span class="text-xs text-muted">Today's Session</span>
+            </div>
+          </div>
+
+          <!-- Timeframe performance comparison -->
+          <div class="timeframe-delta-pill" *ngIf="activeTimeframe !== '1D'">
+            <span class="text-xs text-muted uppercase">{{ activeTimeframe }} RETURN</span>
+            <span class="font-mono font-bold" [class.text-green]="timeframeChange >= 0" [class.text-red]="timeframeChange < 0">
+              {{ timeframeChange >= 0 ? '+' : '' }}${{ timeframeChange | number:'1.2-2' }} ({{ timeframeChange >= 0 ? '+' : '' }}{{ timeframeChangePercent | number:'1.2-2' }}%)
             </span>
-            <span class="text-xs text-muted">Today's Range</span>
+          </div>
+        </div>
+
+        <!-- 52-Week Range Bar -->
+        <div class="range-meter-wrapper">
+          <div class="range-labels font-mono text-xs">
+            <span>52W L: ${{ (selectedQuote.week52Low || selectedQuote.low * 0.85) | number:'1.2-2' }}</span>
+            <span class="text-secondary font-sans">52-Week Trading Range</span>
+            <span>52W H: ${{ (selectedQuote.week52High || selectedQuote.high * 1.15) | number:'1.2-2' }}</span>
+          </div>
+          <div class="range-track">
+            <div class="range-fill" [style.width.%]="get52WeekRangePct()"></div>
+            <div class="range-marker" [style.left.%]="get52WeekRangePct()" [title]="'Current: $' + selectedQuote.price.toFixed(2)"></div>
           </div>
         </div>
 
         <!-- Chart Section -->
         <div class="chart-container">
           <div class="chart-header">
-            <span class="chart-title">PRICE PERFORMANCE</span>
+            <div class="chart-header-left">
+              <span class="chart-title">PERFORMANCE BENCHMARK</span>
+              <span class="text-xs text-muted font-mono" *ngIf="timeframeHigh > 0">
+                Range: ${{ timeframeLow | number:'1.2-2' }} &ndash; ${{ timeframeHigh | number:'1.2-2' }}
+              </span>
+            </div>
             <div class="timeframe-buttons">
-              <button [class.active]="activeTimeframe === '1D'" (click)="setTimeframe('1D')">1D</button>
+              <button [class.active]="activeTimeframe === '1D'" (click)="setTimeframe('1D')">1D (INTRADAY)</button>
               <button [class.active]="activeTimeframe === '1W'" (click)="setTimeframe('1W')">1W</button>
               <button [class.active]="activeTimeframe === '1M'" (click)="setTimeframe('1M')">1M</button>
               <button [class.active]="activeTimeframe === '1Y'" (click)="setTimeframe('1Y')">1Y</button>
@@ -132,45 +210,52 @@
 
           <!-- Interactive SVG Line & Glow Chart -->
           <div class="svg-chart-wrapper">
-            <svg viewBox="0 0 600 220" class="stock-svg" preserveAspectRatio="none">
+            <svg viewBox="0 0 640 230" class="stock-svg" preserveAspectRatio="none">
               <defs>
                 <linearGradient id="chartGradGreen" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stop-color="#48bb78" stop-opacity="0.35"/>
+                  <stop offset="0%" stop-color="#48bb78" stop-opacity="0.30"/>
                   <stop offset="100%" stop-color="#48bb78" stop-opacity="0.0"/>
                 </linearGradient>
                 <linearGradient id="chartGradRed" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stop-color="#fc8181" stop-opacity="0.35"/>
+                  <stop offset="0%" stop-color="#fc8181" stop-opacity="0.30"/>
                   <stop offset="100%" stop-color="#fc8181" stop-opacity="0.0"/>
                 </linearGradient>
               </defs>
 
               <!-- Grid horizontal lines -->
-              <line x1="0" y1="50" x2="600" y2="50" stroke="rgba(255,255,255,0.05)" stroke-dasharray="4 4" />
-              <line x1="0" y1="110" x2="600" y2="110" stroke="rgba(255,255,255,0.05)" stroke-dasharray="4 4" />
-              <line x1="0" y1="170" x2="600" y2="170" stroke="rgba(255,255,255,0.05)" stroke-dasharray="4 4" />
+              <line x1="0" y1="45" x2="640" y2="45" stroke="rgba(255,255,255,0.06)" stroke-dasharray="3 3" />
+              <line x1="0" y1="105" x2="640" y2="105" stroke="rgba(255,255,255,0.06)" stroke-dasharray="3 3" />
+              <line x1="0" y1="165" x2="640" y2="165" stroke="rgba(255,255,255,0.06)" stroke-dasharray="3 3" />
 
               <!-- Area fill under line -->
               <path 
                 [attr.d]="getAreaChartPath()" 
-                [attr.fill]="selectedQuote.change >= 0 ? 'url(#chartGradGreen)' : 'url(#chartGradRed)'">
+                [attr.fill]="(activeTimeframe === '1D' ? selectedQuote.change >= 0 : timeframeChange >= 0) ? 'url(#chartGradGreen)' : 'url(#chartGradRed)'">
               </path>
 
               <!-- Main Trend Line -->
               <path 
                 [attr.d]="getChartPath()" 
                 fill="none" 
-                [attr.stroke]="selectedQuote.change >= 0 ? '#48bb78' : '#fc8181'" 
+                [attr.stroke]="(activeTimeframe === '1D' ? selectedQuote.change >= 0 : timeframeChange >= 0) ? '#48bb78' : '#fc8181'" 
                 stroke-width="2.5"
                 stroke-linecap="round"
                 stroke-linejoin="round">
               </path>
             </svg>
+
+            <!-- Chart Time Labels Row -->
+            <div class="chart-timeline-labels font-mono text-xs text-muted" *ngIf="historyData.length > 0">
+              <span>{{ historyData[0].date }}</span>
+              <span>{{ historyData[Math.floor(historyData.length / 2)].date }}</span>
+              <span>{{ historyData[historyData.length - 1].date }}</span>
+            </div>
           </div>
         </div>
 
         <!-- Key Market Statistics Grid -->
         <div class="stats-section">
-          <h4 class="section-label">KEY FINANCIAL METRICS</h4>
+          <h4 class="section-label">FINANCIAL FUNDAMENTALS & TRADING ATTRIBUTES</h4>
           <div class="grid grid-4 key-metrics-grid">
             <div class="metric-item">
               <span class="metric-label">PREVIOUS CLOSE</span>
@@ -198,11 +283,27 @@
             </div>
             <div class="metric-item">
               <span class="metric-label">VOLUME</span>
-              <span class="metric-val font-mono">{{ selectedQuote.volume | number }}</span>
+              <span class="metric-val font-mono">{{ formatLargeNumber(selectedQuote.volume) }}</span>
+            </div>
+            <div class="metric-item">
+              <span class="metric-label">MARKET CAP</span>
+              <span class="metric-val font-mono">${{ formatLargeNumber(selectedQuote.marketCap) }}</span>
             </div>
             <div class="metric-item">
               <span class="metric-label">P/E RATIO</span>
               <span class="metric-val font-mono">{{ selectedQuote.peRatio || '28.4' }}</span>
+            </div>
+            <div class="metric-item">
+              <span class="metric-label">SECTOR</span>
+              <span class="metric-val font-mono text-blue">{{ selectedQuote.sector || 'Equities' }}</span>
+            </div>
+            <div class="metric-item">
+              <span class="metric-label">EXCHANGE</span>
+              <span class="metric-val font-mono">{{ selectedQuote.exchange || 'NASDAQ' }}</span>
+            </div>
+            <div class="metric-item">
+              <span class="metric-label">SETTLEMENT</span>
+              <span class="metric-val font-mono text-green">T+1 INSTANT</span>
             </div>
           </div>
         </div>

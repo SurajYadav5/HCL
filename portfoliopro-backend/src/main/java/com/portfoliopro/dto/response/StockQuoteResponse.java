@@ -14,6 +14,7 @@ import java.math.BigDecimal;
 public class StockQuoteResponse {
     private String symbol;
     private String companyName;
+    private String sector;
     private BigDecimal price;
     private BigDecimal open;
     private BigDecimal high;

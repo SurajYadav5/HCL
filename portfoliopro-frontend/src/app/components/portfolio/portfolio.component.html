@@ -1,10 +1,29 @@
 <div class="portfolio-page">
+  <!-- Toast Notification -->
+  <div class="toast" [class.toast-success]="toastType === 'success'" [class.toast-error]="toastType === 'error'" *ngIf="toastMessage">
+    <span>{{ toastMessage }}</span>
+  </div>
+
   <div class="page-title-row">
     <div>
       <h1 class="page-title">Portfolio & Risk Management</h1>
-      <p class="text-sm text-secondary">Asset allocation, position risk, and performance tracking</p>
+      <p class="text-sm text-secondary">
+        Multi-asset exposure, sector allocations, and live unrealized P&L &bull; 
+        <span class="font-mono text-blue font-bold">{{ summary.totalPositions }} Open Holdings</span>
+      </p>
     </div>
     <div class="header-actions">
+      <!-- Export CSV Button -->
+      <button class="btn btn-secondary btn-sm" (click)="exportPortfolioCSV()" title="Export portfolio holdings to CSV">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+          <polyline points="7 10 12 15 17 10"></polyline>
+          <line x1="12" y1="15" x2="12" y2="3"></line>
+        </svg>
+        Export CSV
+      </button>
+
+      <!-- Recalculate Button -->
       <button class="btn btn-secondary btn-sm" (click)="loadPortfolio()">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <polyline points="23 4 23 10 17 10"></polyline>
@@ -13,6 +32,7 @@
         </svg>
         Recalculate P&L
       </button>
+
       <a routerLink="/trade" class="btn btn-primary btn-sm">Trade Assets</a>
     </div>
   </div>
@@ -22,7 +42,7 @@
        ══════════════════════════════════════════════════════════════ -->
   <div class="grid grid-4 portfolio-kpi-grid">
     <div class="card kpi-card">
-      <span class="kpi-label">TOTAL PORTFOLIO VALUE</span>
+      <span class="kpi-label">TOTAL PORTFOLIO NET WORTH</span>
       <div class="kpi-value font-mono text-blue">${{ summary.totalPortfolioValue | number:'1.2-2' }}</div>
       <span class="text-xs text-muted">Cash: ${{ summary.cashBalance | number:'1.2-2' }}</span>
     </div>
@@ -59,7 +79,7 @@
     <!-- Asset Distribution Bar -->
     <div class="card risk-card">
       <div class="card-header-styled">
-        <h3>Asset Allocation Breakdown</h3>
+        <h3>Capital Allocation Distribution</h3>
         <span class="badge-tag">REBALANCING</span>
       </div>
 
@@ -80,10 +100,21 @@
         </div>
       </div>
 
+      <!-- Sector Breakdown Chips -->
+      <div class="sector-allocation-section" *ngIf="sectorAllocations.length > 0">
+        <h5 class="text-xs text-muted">SECTOR WEIGHT EXPOSURE</h5>
+        <div class="sector-chips-wrap">
+          <div class="sector-alloc-chip" *ngFor="let sa of sectorAllocations">
+            <span class="sector-name text-xs">{{ sa.sector }}</span>
+            <span class="sector-pct font-mono text-xs font-bold text-blue">{{ sa.pct | number:'1.1-1' }}%</span>
+          </div>
+        </div>
+      </div>
+
       <!-- Holdings weight progress bars -->
       <div class="holding-weights-list" *ngIf="summary.holdings.length > 0">
         <h5 class="text-xs text-muted">WEIGHT BY HOLDING</h5>
-        <div class="weight-row" *ngFor="let h of summary.holdings">
+        <div class="weight-row" *ngFor="let h of summary.holdings.slice(0, 6)">
           <div class="weight-info">
             <span class="font-mono font-semi">{{ h.symbol }}</span>
             <span class="text-xs text-muted">{{ h.companyName }}</span>
@@ -99,7 +130,7 @@
     <!-- Risk Analysis Card -->
     <div class="card risk-metrics-card">
       <div class="card-header-styled">
-        <h3>Risk & Exposure Metrics</h3>
+        <h3>Risk & Portfolio Health Metrics</h3>
       </div>
 
       <div class="risk-indicators">
@@ -115,16 +146,16 @@
 
         <div class="risk-item">
           <div class="risk-info">
-            <span class="risk-name">Estimated Beta</span>
-            <span class="text-xs text-muted">Sensitivity relative to S&P 500 index</span>
+            <span class="risk-name">Portfolio Beta</span>
+            <span class="text-xs text-muted">Equity sensitivity relative to S&P 500 index</span>
           </div>
-          <span class="font-mono font-bold">1.12</span>
+          <span class="font-mono font-bold">1.08</span>
         </div>
 
         <div class="risk-item">
           <div class="risk-info">
-            <span class="risk-name">Largest Position Weight</span>
-            <span class="text-xs text-muted">Max single ticker exposure</span>
+            <span class="risk-name">Largest Position Concentration</span>
+            <span class="text-xs text-muted">Max single equity exposure</span>
           </div>
           <span class="font-mono font-bold">
             {{ summary.holdings.length > 0 ? (summary.holdings[0].allocationPct | number:'1.1-1') : '0.0' }}%
@@ -133,8 +164,8 @@
 
         <div class="risk-item">
           <div class="risk-info">
-            <span class="risk-name">Settlement Status</span>
-            <span class="text-xs text-muted">Reg-T compliance & margin status</span>
+            <span class="risk-name">Regulatory Settlement</span>
+            <span class="text-xs text-muted">FINRA / SEC Reg-T compliance status</span>
           </div>
           <span class="badge badge-gain">CASH ONLY (100% COVERED)</span>
         </div>
@@ -156,12 +187,12 @@
         <!-- Filter Search -->
         <input 
           type="text" 
-          placeholder="Filter by ticker or name..." 
+          placeholder="Filter by ticker, name, or sector..." 
           [(ngModel)]="filterQuery"
           class="filter-input"
         />
 
-        <!-- Sort dropdown -->
+        <!-- Sort buttons -->
         <div class="sort-buttons">
           <button class="btn-sort" [class.active]="sortBy === 'value'" (click)="setSort('value')">
             Value {{ sortBy === 'value' ? (sortOrder === 'desc' ? '↓' : '↑') : '' }}
@@ -169,11 +200,25 @@
           <button class="btn-sort" [class.active]="sortBy === 'pnl'" (click)="setSort('pnl')">
             P&L {{ sortBy === 'pnl' ? (sortOrder === 'desc' ? '↓' : '↑') : '' }}
           </button>
+          <button class="btn-sort" [class.active]="sortBy === 'return'" (click)="setSort('return')">
+            Return % {{ sortBy === 'return' ? (sortOrder === 'desc' ? '↓' : '↑') : '' }}
+          </button>
           <button class="btn-sort" [class.active]="sortBy === 'symbol'" (click)="setSort('symbol')">
             Ticker {{ sortBy === 'symbol' ? (sortOrder === 'desc' ? '↓' : '↑') : '' }}
           </button>
         </div>
       </div>
+    </div>
+
+    <!-- Sector Filter Pills -->
+    <div class="portfolio-sector-pills" *ngIf="availableSectors.length > 2">
+      <button 
+        *ngFor="let sec of availableSectors" 
+        class="sec-filter-pill"
+        [class.active]="selectedSectorFilter === sec"
+        (click)="selectedSectorFilter = sec">
+        {{ sec }}
+      </button>
     </div>
 
     <div class="table-responsive" *ngIf="filteredHoldings.length > 0">
@@ -201,7 +246,7 @@
               </div>
             </td>
             <td>
-              <span class="sector-tag font-mono">{{ h.sector || 'Technology' }}</span>
+              <span class="sector-tag font-mono">{{ h.sector || 'Equities' }}</span>
             </td>
             <td class="font-mono font-semi">{{ h.quantity }}</td>
             <td class="font-mono">${{ h.averageCost | number:'1.2-2' }}</td>

@@ -26,6 +26,7 @@
   border-radius: var(--radius-full);
   font-size: 0.78rem;
   font-weight: 700;
+  cursor: pointer;
   transition: var(--transition-fast);
 }
 .ticker-pill:hover {
@@ -37,6 +38,16 @@
   background: var(--accent-blue);
   color: #0a0e1a;
   border-color: var(--accent-blue);
+}
+.ticker-pill.more-pill {
+  background: rgba(255,255,255,0.04);
+  color: var(--text-secondary);
+  border-style: dashed;
+}
+.ticker-pill.more-pill:hover {
+  background: rgba(99,179,237,0.1);
+  color: var(--accent-blue);
+  border-style: solid;
 }
 
 .trade-grid {
@@ -76,6 +87,8 @@
   font-size: 0.88rem;
   background: transparent;
   color: var(--text-secondary);
+  border: none;
+  cursor: pointer;
   transition: var(--transition-fast);
 }
 
@@ -106,6 +119,8 @@
   font-weight: 700;
   background: transparent;
   color: var(--text-secondary);
+  border: none;
+  cursor: pointer;
   transition: var(--transition-fast);
 }
 .type-tab.active {
@@ -117,7 +132,7 @@
   padding: 24px;
   display: flex;
   flex-direction: column;
-  gap: 18px;
+  gap: 16px;
 }
 
 .stock-quote-bar {
@@ -130,16 +145,90 @@
   border-radius: var(--radius-md);
 }
 
+.symbol-with-picker-link {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
 .sym-tag {
   font-size: 1.1rem;
   color: var(--accent-blue);
-  margin-right: 8px;
+}
+
+.picker-link-btn {
+  background: rgba(255,255,255,0.08);
+  border: none;
+  color: var(--text-secondary);
+  font-size: 0.7rem;
+  padding: 2px 6px;
+  border-radius: 3px;
+  cursor: pointer;
+  transition: var(--transition-fast);
+}
+.picker-link-btn:hover {
+  background: var(--accent-blue);
+  color: #0a0e1a;
 }
 
 .quote-price-info {
   display: flex;
   align-items: center;
   gap: 10px;
+}
+
+/* Portfolio Holding Pills for SELL mode */
+.portfolio-holding-pills {
+  background: rgba(255,255,255,0.02);
+  border: 1px solid var(--border-subtle);
+  padding: 8px 12px;
+  border-radius: var(--radius-sm);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.holding-chips {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.holding-chip {
+  background: rgba(99,179,237,0.1);
+  border: 1px solid rgba(99,179,237,0.25);
+  color: #63b3ed;
+  font-size: 0.72rem;
+  padding: 3px 8px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: var(--transition-fast);
+}
+.holding-chip:hover {
+  background: rgba(99,179,237,0.25);
+}
+.holding-chip.active {
+  background: var(--accent-blue);
+  color: #0a0e1a;
+  font-weight: 700;
+}
+
+.limit-helpers {
+  display: flex;
+  gap: 4px;
+}
+.btn-limit-adj {
+  background: var(--bg-input);
+  border: 1px solid var(--border-subtle);
+  color: var(--text-secondary);
+  font-size: 0.68rem;
+  font-family: var(--font-mono);
+  padding: 2px 6px;
+  border-radius: 3px;
+  cursor: pointer;
+  transition: var(--transition-fast);
+}
+.btn-limit-adj:hover {
+  background: rgba(255,255,255,0.08);
+  color: var(--text-primary);
 }
 
 .percent-pills {
@@ -157,6 +246,7 @@
   border-radius: var(--radius-sm);
   font-size: 0.72rem;
   font-weight: 700;
+  cursor: pointer;
   transition: var(--transition-fast);
 }
 .pct-btn:hover {
@@ -190,8 +280,14 @@
 
 .order-submit-btn {
   padding: 14px;
-  font-size: 1rem;
+  font-size: 0.95rem;
   font-weight: 800;
+  border: none;
+  cursor: pointer;
+}
+.order-submit-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
 }
 
 /* ── Sidebar ────────────────────────────────────────────────────── */
@@ -229,6 +325,119 @@
   margin-top: 10px;
 }
 
+/* ── Stock Catalog Picker Modal ─────────────────────────────────── */
+.picker-modal {
+  max-width: 680px;
+  max-height: 82vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  padding: 20px;
+}
+
+.btn-close-picker {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  font-size: 1.5rem;
+  cursor: pointer;
+  line-height: 1;
+}
+
+.picker-search-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--bg-input);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  padding: 8px 12px;
+  margin: 12px 0;
+}
+.picker-search-bar input {
+  background: transparent;
+  border: none;
+  outline: none;
+  color: var(--text-primary);
+  font-size: 0.85rem;
+  width: 100%;
+}
+
+.picker-category-tabs {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  padding-bottom: 8px;
+  margin-bottom: 10px;
+}
+.picker-category-tabs button {
+  background: rgba(255,255,255,0.04);
+  border: 1px solid var(--border-subtle);
+  color: var(--text-secondary);
+  font-size: 0.7rem;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: 4px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: var(--transition-fast);
+}
+.picker-category-tabs button.active {
+  background: var(--accent-blue);
+  color: #0a0e1a;
+  border-color: var(--accent-blue);
+}
+
+.picker-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+  overflow-y: auto;
+  max-height: 380px;
+  padding-right: 4px;
+}
+@media (max-width: 600px) {
+  .picker-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.picker-stock-card {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 12px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: var(--transition-fast);
+}
+.picker-stock-card:hover {
+  background: rgba(99,179,237,0.1);
+  border-color: rgba(99,179,237,0.3);
+}
+.picker-stock-card.active {
+  background: rgba(99,179,237,0.15);
+  border-color: #63b3ed;
+}
+
+.picker-card-left {
+  max-width: 180px;
+}
+.truncate {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.picker-card-right {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+}
+
 /* ── Modal ──────────────────────────────────────────────────────── */
 .modal-backdrop {
   position: fixed;
@@ -236,7 +445,7 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0,0,0,0.7);
+  background: rgba(0,0,0,0.75);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -246,22 +455,22 @@
 
 .modal-card {
   width: 100%;
-  max-width: 460px;
-  padding: 28px;
+  max-width: 480px;
+  padding: 24px;
 }
 
 .modal-header {
-  text-align: center;
   display: flex;
-  flex-direction: column;
+  justify-content: space-between;
   align-items: center;
-  gap: 8px;
-  margin-bottom: 20px;
+  border-bottom: 1px solid var(--border-subtle);
+  padding-bottom: 12px;
+  margin-bottom: 16px;
 }
 
 .receipt-icon {
-  width: 52px;
-  height: 52px;
+  width: 48px;
+  height: 48px;
   border-radius: 50%;
   background: rgba(72,187,120,0.15);
   color: var(--green-bright);

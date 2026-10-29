@@ -40,7 +40,8 @@ export class AnalysisComponent implements OnInit {
   bearishCount: number = 1;
   neutralCount: number = 2;
 
-  popularTickers = ['NVDA', 'AAPL', 'MSFT', 'AMZN', 'GOOGL', 'TSLA', 'META', 'JPM'];
+  popularTickers = ['NVDA', 'AAPL', 'MSFT', 'AMZN', 'GOOGL', 'TSLA', 'META', 'JPM', 'LLY', 'XOM', 'JNJ', 'WMT'];
+  customSymbol: string = '';
 
   constructor(
     private marketDataService: MarketDataService,
@@ -60,6 +61,13 @@ export class AnalysisComponent implements OnInit {
   selectTicker(sym: string): void {
     this.selectedSymbol = sym.toUpperCase();
     this.loadAnalysis();
+  }
+
+  onAnalyzeEnter(): void {
+    if (this.customSymbol.trim()) {
+      this.selectTicker(this.customSymbol.trim().toUpperCase());
+      this.customSymbol = '';
+    }
   }
 
   loadAnalysis(): void {

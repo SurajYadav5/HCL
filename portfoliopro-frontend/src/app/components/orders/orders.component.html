@@ -1,10 +1,26 @@
 <div class="orders-page">
+  <!-- Toast Notification -->
+  <div class="toast" [class.toast-success]="toastType === 'success'" [class.toast-error]="toastType === 'error'" *ngIf="toastMessage">
+    <span>{{ toastMessage }}</span>
+  </div>
+
   <div class="page-title-row">
     <div>
-      <h1 class="page-title">Trade Execution Audit & History</h1>
-      <p class="text-sm text-secondary">Complete ledger of executed market and limit equity orders</p>
+      <h1 class="page-title">Trade Execution Audit & Ledger</h1>
+      <p class="text-sm text-secondary">Complete historical audit trail of all equity transactions &bull; <span class="font-mono text-blue font-bold">{{ totalOrders }} Total Orders Recorded</span></p>
     </div>
     <div class="header-actions">
+      <!-- Export CSV Button -->
+      <button class="btn btn-secondary btn-sm" (click)="exportToCSV()" title="Export filtered orders to CSV">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+          <polyline points="7 10 12 15 17 10"></polyline>
+          <line x1="12" y1="15" x2="12" y2="3"></line>
+        </svg>
+        Export CSV
+      </button>
+
+      <!-- Refresh Log Button -->
       <button class="btn btn-secondary btn-sm" (click)="loadOrders(currentPage)">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <polyline points="23 4 23 10 17 10"></polyline>
@@ -13,12 +29,14 @@
         </svg>
         Refresh Log
       </button>
+
+      <!-- Place Trade Button -->
       <a routerLink="/trade" class="btn btn-primary btn-sm">Place Trade</a>
     </div>
   </div>
 
   <!-- KPI Strip -->
-  <div class="grid grid-4 stat-strip">
+  <div class="grid grid-5 stat-strip">
     <div class="card stat-mini-card">
       <span class="stat-mini-label">TOTAL ORDERS PLACED</span>
       <div class="stat-mini-val font-mono">{{ totalOrders }}</div>
@@ -30,6 +48,10 @@
     <div class="card stat-mini-card">
       <span class="stat-mini-label">SELL ORDERS</span>
       <div class="stat-mini-val font-mono text-red">{{ totalSellCount }}</div>
+    </div>
+    <div class="card stat-mini-card">
+      <span class="stat-mini-label">PENDING WORKING</span>
+      <div class="stat-mini-val font-mono text-gold">{{ totalPendingCount }}</div>
     </div>
     <div class="card stat-mini-card">
       <span class="stat-mini-label">TOTAL VOLUME SETTLED</span>
@@ -46,7 +68,8 @@
           <circle cx="11" cy="11" r="8"></circle>
           <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
         </svg>
-        <input type="text" placeholder="Search by ticker..." [(ngModel)]="searchSymbol" />
+        <input type="text" placeholder="Filter by ticker or name..." [(ngModel)]="searchSymbol" />
+        <button *ngIf="searchSymbol" class="clear-search-btn" (click)="searchSymbol = ''">&times;</button>
       </div>
 
       <!-- Side Filter -->
@@ -59,6 +82,16 @@
         </div>
       </div>
 
+      <!-- Type Filter -->
+      <div class="filter-group">
+        <span class="filter-lbl">TYPE:</span>
+        <div class="filter-pills">
+          <button [class.active]="selectedTypeFilter === 'ALL'" (click)="selectedTypeFilter = 'ALL'">ALL</button>
+          <button [class.active]="selectedTypeFilter === 'MARKET'" (click)="selectedTypeFilter = 'MARKET'">MARKET</button>
+          <button [class.active]="selectedTypeFilter === 'LIMIT'" (click)="selectedTypeFilter = 'LIMIT'">LIMIT</button>
+        </div>
+      </div>
+
       <!-- Status Filter -->
       <div class="filter-group">
         <span class="filter-lbl">STATUS:</span>
@@ -66,8 +99,16 @@
           <button [class.active]="selectedStatusFilter === 'ALL'" (click)="selectedStatusFilter = 'ALL'">ALL</button>
           <button [class.active]="selectedStatusFilter === 'EXECUTED'" (click)="selectedStatusFilter = 'EXECUTED'">EXECUTED</button>
           <button [class.active]="selectedStatusFilter === 'PENDING'" (click)="selectedStatusFilter = 'PENDING'">PENDING</button>
+          <button [class.active]="selectedStatusFilter === 'CANCELLED'" (click)="selectedStatusFilter = 'CANCELLED'">CANCELLED</button>
         </div>
       </div>
+    </div>
+
+    <!-- Showing entries count -->
+    <div class="table-info-strip">
+      <span class="text-xs text-muted">
+        Displaying <strong class="text-primary font-mono">{{ filteredOrders.length }}</strong> orders on page {{ currentPage + 1 }}
+      </span>
     </div>
 
     <!-- Orders Table -->
@@ -81,10 +122,10 @@
             <th>SIDE</th>
             <th>TYPE</th>
             <th>SHARES</th>
-            <th>EXEC PRICE</th>
+            <th>EXEC / LIMIT PRICE</th>
             <th>TOTAL VALUE</th>
             <th>STATUS</th>
-            <th>RECEIPT</th>
+            <th>ACTIONS</th>
           </tr>
         </thead>
         <tbody>
@@ -100,17 +141,32 @@
                 {{ o.side }}
               </span>
             </td>
-            <td class="font-mono text-xs">{{ o.type }}</td>
+            <td class="font-mono text-xs">
+              <span class="order-type-badge font-mono">{{ o.type }}</span>
+            </td>
             <td class="font-mono font-semi">{{ o.quantity }}</td>
             <td class="font-mono">${{ (o.executedPrice || o.limitPrice || 0) | number:'1.2-2' }}</td>
             <td class="font-mono font-bold">${{ (o.totalValue || 0) | number:'1.2-2' }}</td>
             <td>
-              <span class="status-tag" [class.status-green]="o.status === 'EXECUTED'" [class.status-gold]="o.status === 'PENDING'">
+              <span class="status-tag" 
+                [class.status-green]="o.status === 'EXECUTED'" 
+                [class.status-gold]="o.status === 'PENDING'"
+                [class.status-red]="o.status === 'CANCELLED'">
                 {{ o.status }}
               </span>
             </td>
             <td>
-              <button class="btn-detail" (click)="viewDetails(o)">Audit</button>
+              <div class="action-cell">
+                <button class="btn-detail" (click)="viewDetails(o)">Audit</button>
+                <button 
+                  *ngIf="o.status === 'PENDING'" 
+                  class="btn-cancel-order" 
+                  [disabled]="isCancelling"
+                  (click)="cancelPendingOrder(o, $event)"
+                  title="Cancel this pending limit order">
+                  Cancel
+                </button>
+              </div>
             </td>
           </tr>
         </tbody>
@@ -122,13 +178,30 @@
       <div class="empty-icon">📝</div>
       <h4>No Execution Records Found</h4>
       <p class="text-sm text-secondary">No trades match your active search or filter criteria.</p>
+      <button class="btn btn-secondary btn-sm" (click)="selectedSideFilter = 'ALL'; selectedStatusFilter = 'ALL'; selectedTypeFilter = 'ALL'; searchSymbol = ''">
+        Reset All Filters
+      </button>
     </div>
 
-    <!-- Pagination -->
+    <!-- Numbered Pagination Bar (Supports all 109 orders) -->
     <div class="pagination-bar" *ngIf="totalPages > 1">
-      <button class="page-btn" [disabled]="currentPage === 0" (click)="loadOrders(currentPage - 1)">Previous</button>
-      <span class="page-info text-xs text-secondary font-mono">Page {{ currentPage + 1 }} of {{ totalPages }}</span>
-      <button class="page-btn" [disabled]="currentPage >= totalPages - 1" (click)="loadOrders(currentPage + 1)">Next</button>
+      <button class="page-btn nav-btn" [disabled]="currentPage === 0" (click)="loadOrders(currentPage - 1)">
+        &laquo; Previous
+      </button>
+
+      <div class="page-numbers">
+        <button 
+          *ngFor="let p of pagesArray"
+          class="page-number-btn font-mono" 
+          [class.active]="currentPage === p"
+          (click)="loadOrders(p)">
+          {{ p + 1 }}
+        </button>
+      </div>
+
+      <button class="page-btn nav-btn" [disabled]="currentPage >= totalPages - 1" (click)="loadOrders(currentPage + 1)">
+        Next &raquo;
+      </button>
     </div>
   </div>
 
@@ -156,26 +229,38 @@
         </div>
         <div class="receipt-row">
           <span class="text-secondary text-xs">Execution Price:</span>
-          <span class="font-mono font-semi">${{ selectedOrder.executedPrice | number:'1.2-2' }}</span>
+          <span class="font-mono font-semi">${{ (selectedOrder.executedPrice || selectedOrder.limitPrice || 0) | number:'1.2-2' }}</span>
         </div>
         <div class="receipt-row">
           <span class="text-secondary text-xs">Gross Settlement:</span>
-          <span class="font-mono font-bold">${{ selectedOrder.totalValue | number:'1.2-2' }}</span>
+          <span class="font-mono font-bold">${{ (selectedOrder.totalValue || 0) | number:'1.2-2' }}</span>
         </div>
         <div class="receipt-row">
           <span class="text-secondary text-xs">Brokerage Commission:</span>
-          <span class="font-mono text-green">$0.00</span>
+          <span class="font-mono text-green">$0.00 (FREE)</span>
         </div>
         <div class="receipt-row">
-          <span class="text-secondary text-xs">Status:</span>
-          <span class="font-mono text-xs text-green">{{ selectedOrder.status }}</span>
+          <span class="text-secondary text-xs">Order Status:</span>
+          <span class="status-tag" 
+            [class.status-green]="selectedOrder.status === 'EXECUTED'" 
+            [class.status-gold]="selectedOrder.status === 'PENDING'"
+            [class.status-red]="selectedOrder.status === 'CANCELLED'">
+            {{ selectedOrder.status }}
+          </span>
         </div>
         <div class="receipt-row">
-          <span class="text-secondary text-xs">Executed Timestamp:</span>
+          <span class="text-secondary text-xs">Order Timestamp:</span>
           <span class="font-mono text-xs text-muted">{{ selectedOrder.createdAt | date:'medium' }}</span>
         </div>
       </div>
       <div class="modal-footer">
+        <button 
+          *ngIf="selectedOrder.status === 'PENDING'" 
+          class="btn btn-sell btn-sm"
+          [disabled]="isCancelling"
+          (click)="cancelPendingOrder(selectedOrder)">
+          Cancel Order
+        </button>
         <button class="btn btn-secondary btn-sm" (click)="closeDetail()">Dismiss</button>
       </div>
     </div>

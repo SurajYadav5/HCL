@@ -28,9 +28,15 @@ export class MarketDataService {
     return this.http.get<ApiResponse<StockQuote[]>>(`${this.API}/quotes/batch`, { params });
   }
 
-  getMarketOverview(): Observable<ApiResponse<StockQuote[]>> {
-    return this.http.get<ApiResponse<StockQuote[]>>(`${this.API}/market-overview`).pipe(
-      shareReplay(1)
-    );
+  getMarketOverview(sector?: string): Observable<ApiResponse<StockQuote[]>> {
+    let params = new HttpParams();
+    if (sector && sector !== 'ALL') {
+      params = params.set('sector', sector);
+    }
+    return this.http.get<ApiResponse<StockQuote[]>>(`${this.API}/market-overview`, { params });
+  }
+
+  getSectors(): Observable<ApiResponse<string[]>> {
+    return this.http.get<ApiResponse<string[]>>(`${this.API}/sectors`);
   }
 }

@@ -59,12 +59,18 @@ public class MarketDataController {
     }
 
     @GetMapping("/market-overview")
-    @Operation(summary = "Get overview of major indices and popular stocks")
-    public ResponseEntity<ApiResponse<List<StockQuoteResponse>>> getMarketOverview() {
-        List<String> majorSymbols = List.of("AAPL", "MSFT", "GOOGL", "AMZN", "TSLA", "NVDA", "META", "JPM");
-        List<StockQuoteResponse> quotes = majorSymbols.stream()
-                .map(marketDataService::getQuote)
-                .toList();
+    @Operation(summary = "Get overview of stocks from catalog, optionally filtered by sector")
+    public ResponseEntity<ApiResponse<List<StockQuoteResponse>>> getMarketOverview(
+            @RequestParam(required = false) String sector) {
+        List<StockQuoteResponse> quotes = (sector != null && !sector.trim().isEmpty() && !sector.equalsIgnoreCase("ALL"))
+                ? marketDataService.getStocksBySector(sector.trim())
+                : marketDataService.getAllStocksFromDb();
         return ResponseEntity.ok(ApiResponse.success(quotes));
+    }
+
+    @GetMapping("/sectors")
+    @Operation(summary = "Get list of available equity sectors")
+    public ResponseEntity<ApiResponse<List<String>>> getSectors() {
+        return ResponseEntity.ok(ApiResponse.success(marketDataService.getAllSectors()));
     }
 }

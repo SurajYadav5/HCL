@@ -112,6 +112,14 @@ export class LayoutComponent implements OnInit, OnDestroy {
     this.searchSubject.next(this.searchQuery);
   }
 
+  onSearchEnter(): void {
+    if (this.searchResults.length > 0) {
+      this.selectStock(this.searchResults[0].symbol);
+    } else if (this.searchQuery.trim().length > 0) {
+      this.selectStock(this.searchQuery.trim().toUpperCase());
+    }
+  }
+
   selectStock(symbol: string): void {
     this.showSearchModal = false;
     this.searchQuery = '';

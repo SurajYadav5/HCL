@@ -13,6 +13,8 @@ import java.util.Optional;
 @Repository
 public interface PortfolioRepository extends JpaRepository<Portfolio, Long> {
 
+    List<Portfolio> findByUserId(Long userId);
+
     List<Portfolio> findByUserIdOrderByCurrentValueDesc(Long userId);
 
     Optional<Portfolio> findByUserIdAndSymbol(Long userId, String symbol);

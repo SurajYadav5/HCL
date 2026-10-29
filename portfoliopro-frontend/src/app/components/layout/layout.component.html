@@ -166,6 +166,7 @@
               placeholder="Search ticker (e.g., AAPL, NVDA, TSLA)..." 
               [(ngModel)]="searchQuery"
               (input)="onSearchChange()"
+              (keydown.enter)="onSearchEnter()"
               (focus)="showSearchModal = true"
             />
             <span *ngIf="isSearching" class="spinner-small"></span>

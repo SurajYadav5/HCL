@@ -56,4 +56,13 @@ public class TradingController {
         OrderResponse order = tradingService.getOrderById(userDetails.getUsername(), orderId);
         return ResponseEntity.ok(ApiResponse.success(order));
     }
+
+    @PostMapping("/{orderId}/cancel")
+    @Operation(summary = "Cancel a pending limit or market order")
+    public ResponseEntity<ApiResponse<OrderResponse>> cancelOrder(
+            @AuthenticationPrincipal UserDetails userDetails,
+            @PathVariable Long orderId) {
+        OrderResponse order = tradingService.cancelOrder(userDetails.getUsername(), orderId);
+        return ResponseEntity.ok(ApiResponse.success("Order cancelled successfully", order));
+    }
 }
